@@ -1,0 +1,19 @@
+export default function ConciliacionPage() {
+  return (
+    <div className="space-y-4">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Conciliación bancaria
+        </h1>
+        <p className="mt-1 text-sm text-slate-600">
+          Importa cartolas, cruza pagos y revisa diferencias (pendiente de
+          implementación).
+        </p>
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700 shadow-sm">
+        Próximo: pantalla de carga de archivo + tabla de movimientos bancarios.
+      </div>
+    </div>
+  )
+}
