@@ -22,7 +22,7 @@ function StatCard({
           </div>
           <div className="mt-1 text-xs text-slate-500">{helper}</div>
         </div>
-        <div className="grid h-10 w-10 place-items-center rounded-2xl bg-slate-900 text-white">
+        <div className="grid h-10 w-10 place-items-center rounded-2xl bg-brand text-white">
           <Icon className="h-5 w-5" aria-hidden="true" />
         </div>
       </div>
@@ -102,7 +102,7 @@ export default function DashboardPage() {
 
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="text-sm font-semibold">Últimos movimientos</div>
-          <div className="mt-3 overflow-hidden rounded-xl border border-slate-200">
+          <div className="mt-3 overflow-x-auto rounded-xl border border-slate-200">
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50 text-xs text-slate-600">
                 <tr>

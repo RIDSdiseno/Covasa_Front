@@ -4,16 +4,20 @@ import Button from '../../components/ui/Button'
 
 type StockRow = {
   id: string
+  inventarioId: string
   sku: string
   producto: string
+  foto?: string
   precio: number
   stock: number
   minimo: number
 }
 
 type StockRowDraft = {
+  inventarioId: string
   sku: string
   producto: string
+  foto: string
   precio: string
   stock: string
   minimo: string
@@ -31,6 +35,7 @@ function createId() {
 const initialRows: StockRow[] = [
   {
     id: createId(),
+    inventarioId: 'INV-001',
     sku: 'SKU-001',
     producto: 'Producto X',
     precio: 12990,
@@ -39,6 +44,7 @@ const initialRows: StockRow[] = [
   },
   {
     id: createId(),
+    inventarioId: 'INV-002',
     sku: 'SKU-002',
     producto: 'Producto Y',
     precio: 8990,
@@ -47,6 +53,7 @@ const initialRows: StockRow[] = [
   },
   {
     id: createId(),
+    inventarioId: 'INV-003',
     sku: 'SKU-003',
     producto: 'Producto Z',
     precio: 1990,
@@ -57,8 +64,10 @@ const initialRows: StockRow[] = [
 
 function toDraft(row?: StockRow): StockRowDraft {
   return {
+    inventarioId: row?.inventarioId ?? '',
     sku: row?.sku ?? '',
     producto: row?.producto ?? '',
+    foto: row?.foto ?? '',
     precio: row ? String(row.precio) : '',
     stock: row ? String(row.stock) : '',
     minimo: row ? String(row.minimo) : '',
@@ -119,12 +128,15 @@ export default function InventarioStockPage() {
     event.preventDefault()
     setFormError(null)
 
+    const inventarioId = draft.inventarioId.trim()
     const sku = draft.sku.trim()
     const producto = draft.producto.trim()
+    const foto = draft.foto.trim()
     const precio = parseNonNegativeNumber(draft.precio)
     const stock = parseNonNegativeInteger(draft.stock)
     const minimo = parseNonNegativeInteger(draft.minimo)
 
+    if (!inventarioId) return setFormError('El ID de inventario es obligatorio.')
     if (!sku) return setFormError('El SKU es obligatorio.')
     if (!producto) return setFormError('El nombre del producto es obligatorio.')
     if (precio === null) return setFormError('El precio debe ser un número ≥ 0.')
@@ -141,8 +153,10 @@ export default function InventarioStockPage() {
     if (dialogMode === 'create') {
       const newRow: StockRow = {
         id: createId(),
+        inventarioId,
         sku,
         producto,
+        foto: foto || undefined,
         precio,
         stock,
         minimo,
@@ -157,7 +171,16 @@ export default function InventarioStockPage() {
     setRows((current) =>
       current.map((row) =>
         row.id === editingId
-          ? { ...row, sku, producto, precio, stock, minimo }
+          ? {
+              ...row,
+              inventarioId,
+              sku,
+              producto,
+              foto: foto || undefined,
+              precio,
+              stock,
+              minimo,
+            }
           : row,
       ),
     )
@@ -174,10 +197,12 @@ export default function InventarioStockPage() {
         </Button>
       </div>
 
-      <div className="mt-4 overflow-hidden rounded-xl border border-slate-200">
-        <table className="w-full text-left text-sm">
+      <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
+        <table className="w-full min-w-[720px] text-left text-sm">
           <thead className="bg-slate-50 text-xs font-medium text-slate-600">
             <tr>
+              <th className="px-3 py-2">Foto</th>
+              <th className="px-3 py-2">ID inventario</th>
               <th className="px-3 py-2">SKU</th>
               <th className="px-3 py-2">Producto</th>
               <th className="px-3 py-2 text-right">Precio</th>
@@ -191,6 +216,21 @@ export default function InventarioStockPage() {
               const low = row.stock < row.minimo
               return (
                 <tr key={row.id} className="bg-white">
+                  <td className="px-3 py-2">
+                    {row.foto ? (
+                      <img
+                        src={row.foto}
+                        alt={`Foto de ${row.producto}`}
+                        className="h-10 w-10 rounded-xl border border-slate-200 object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 text-[10px] font-medium uppercase text-slate-500">
+                        Sin foto
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-3 py-2">{row.inventarioId}</td>
                   <td className="px-3 py-2">{row.sku}</td>
                   <td className="px-3 py-2 font-medium text-slate-900">
                     {row.producto}
@@ -299,6 +339,25 @@ export default function InventarioStockPage() {
 
               <label className="space-y-1">
                 <div className="text-xs font-medium text-slate-700">
+                  ID de inventario
+                </div>
+                <input
+                  value={draft.inventarioId}
+                  onChange={(event) =>
+                    setDraft((current) => ({
+                      ...current,
+                      inventarioId: event.target.value,
+                    }))
+                  }
+                  className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm shadow-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
+                  placeholder="INV-004"
+                  autoComplete="off"
+                  required
+                />
+              </label>
+
+              <label className="space-y-1">
+                <div className="text-xs font-medium text-slate-700">
                   Producto
                 </div>
                 <input
@@ -313,6 +372,25 @@ export default function InventarioStockPage() {
                   placeholder="Nombre del producto"
                   autoComplete="off"
                   required
+                />
+              </label>
+
+              <label className="space-y-1">
+                <div className="text-xs font-medium text-slate-700">
+                  Foto (URL)
+                </div>
+                <input
+                  value={draft.foto}
+                  onChange={(event) =>
+                    setDraft((current) => ({
+                      ...current,
+                      foto: event.target.value,
+                    }))
+                  }
+                  className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm shadow-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
+                  placeholder="https://..."
+                  autoComplete="off"
+                  type="url"
                 />
               </label>
 
@@ -382,4 +460,3 @@ export default function InventarioStockPage() {
     </div>
   )
 }
-

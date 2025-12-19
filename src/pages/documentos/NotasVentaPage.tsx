@@ -22,13 +22,13 @@ export default function NotasVentaPage() {
           <div className="text-sm font-semibold">Notas de venta (demo)</div>
           <button
             type="button"
-            className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+            className="inline-flex items-center justify-center rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-dark"
           >
             Nueva nota
           </button>
         </div>
 
-        <div className="mt-4 overflow-hidden rounded-xl border border-slate-200">
+        <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 text-xs font-medium text-slate-600">
               <tr>

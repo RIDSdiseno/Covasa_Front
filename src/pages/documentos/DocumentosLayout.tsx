@@ -2,9 +2,9 @@ import { NavLink, Outlet } from 'react-router-dom'
 import { cn } from '../../lib/cn'
 
 const tabs = [
-  { to: 'notas-venta', label: 'Notas de venta' },
   { to: 'cotizaciones', label: 'Cotizaciones' },
-  { to: 'ordenes-compra', label: 'Órdenes de compra' },
+  { to: 'notas-venta', label: 'Nota de ventas' },
+  { to: 'facturas', label: 'Facturas' },
 ]
 
 export default function DocumentosLayout() {
@@ -13,7 +13,7 @@ export default function DocumentosLayout() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Documentos</h1>
         <p className="mt-1 text-sm text-slate-600">
-          Cotizaciones, notas de venta y órdenes de compra.
+          Cotizaciones, nota de ventas y facturas.
         </p>
       </div>
 

@@ -29,16 +29,31 @@ export default function LoginPage() {
   if (user) return <Navigate to="/dashboard" replace />
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="mx-auto flex min-h-screen max-w-[1440px] items-center justify-center p-4">
-        <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="relative min-h-screen bg-slate-950">
+      <div className="absolute inset-0">
+        <img
+          src="/img/fondo_login.png"
+          alt=""
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-slate-950/60" />
+      </div>
+
+      <div className="relative mx-auto flex min-h-screen max-w-[1200px] items-center justify-center p-4 lg:justify-end">
+        <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 text-slate-900 shadow-2xl">
           <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-2xl bg-slate-900 text-sm font-semibold text-white">
-              C
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white shadow-sm">
+              <img
+                src="/img/logo.png"
+                alt="COVASA"
+                className="h-7 w-7 object-contain"
+              />
             </div>
             <div>
-              <div className="text-base font-semibold leading-tight">COVASA</div>
-              <div className="text-xs text-slate-600">
+              <div className="text-lg font-semibold leading-tight text-slate-900">
+                COVASA
+              </div>
+              <div className="text-xs text-slate-800">
                 Iniciar sesión al sistema
               </div>
             </div>
@@ -64,24 +79,26 @@ export default function LoginPage() {
             }}
           >
             <label className="grid gap-1 text-sm">
-              <span className="text-xs font-medium text-slate-600">Correo</span>
+              <span className="text-xs font-semibold text-slate-900">
+                Correo
+              </span>
               <input
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                className="h-11 rounded-2xl border border-slate-200 bg-white px-4 text-sm outline-none ring-slate-300 focus:ring-2"
+                className="h-11 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none ring-brand/40 focus:ring-2"
                 placeholder="xlazo@covasachile.cl"
                 autoComplete="email"
               />
             </label>
 
             <label className="grid gap-1 text-sm">
-              <span className="text-xs font-medium text-slate-600">
+              <span className="text-xs font-semibold text-slate-900">
                 Contraseña
               </span>
               <input
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                className="h-11 rounded-2xl border border-slate-200 bg-white px-4 text-sm outline-none ring-slate-300 focus:ring-2"
+                className="h-11 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none ring-brand/40 focus:ring-2"
                 placeholder="••••••••"
                 type="password"
                 autoComplete="current-password"

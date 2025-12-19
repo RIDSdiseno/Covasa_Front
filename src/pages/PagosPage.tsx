@@ -142,7 +142,7 @@ export default function PagosPage() {
                     archivo: event.target.files?.[0] ?? undefined,
                   }))
                 }
-                className="block w-full text-sm text-slate-700 file:mr-3 file:rounded-xl file:border-0 file:bg-slate-900 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-slate-800"
+                className="block w-full text-sm text-slate-700 file:mr-3 file:rounded-xl file:border-0 file:bg-brand file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-brand-dark"
               />
             </label>
           </div>
@@ -150,7 +150,7 @@ export default function PagosPage() {
           <div className="mt-4 flex flex-wrap gap-2">
             <button
               type="button"
-              className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+              className="inline-flex items-center justify-center rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-dark"
             >
               Guardar (demo)
             </button>

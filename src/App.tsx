@@ -12,7 +12,7 @@ import ConfiguracionPage from './pages/ConfiguracionPage'
 import DocumentosLayout from './pages/documentos/DocumentosLayout'
 import CotizacionesPage from './pages/documentos/CotizacionesPage'
 import NotasVentaPage from './pages/documentos/NotasVentaPage'
-import OrdenesCompraPage from './pages/documentos/OrdenesCompraPage'
+import FacturasPage from './pages/documentos/FacturasPage'
 import InventarioLayout from './pages/inventario/InventarioLayout'
 import InventarioMovimientosPage from './pages/inventario/InventarioMovimientosPage'
 import InventarioRankingPage from './pages/inventario/InventarioRankingPage'
@@ -63,10 +63,10 @@ export default function App() {
         </Route>
 
         <Route path="documentos" element={<DocumentosLayout />}>
-          <Route index element={<Navigate to="notas-venta" replace />} />
+          <Route index element={<Navigate to="cotizaciones" replace />} />
           <Route path="cotizaciones" element={<CotizacionesPage />} />
           <Route path="notas-venta" element={<NotasVentaPage />} />
-          <Route path="ordenes-compra" element={<OrdenesCompraPage />} />
+          <Route path="facturas" element={<FacturasPage />} />
         </Route>
 
         <Route path="conciliacion" element={<ConciliacionPage />} />

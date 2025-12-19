@@ -8,7 +8,7 @@ export default function InventarioRankingPage() {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="text-sm font-semibold">Ranking bodega (demo)</div>
-      <div className="mt-4 overflow-hidden rounded-xl border border-slate-200">
+      <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
         <table className="w-full text-left text-sm">
           <thead className="bg-slate-50 text-xs font-medium text-slate-600">
             <tr>

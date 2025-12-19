@@ -44,8 +44,8 @@ function SidebarNav({
             cn(
               'flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors',
               isActive
-                ? 'bg-slate-900 text-white'
-                : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900',
+                ? 'bg-brand text-white'
+                : 'text-slate-700 hover:bg-brand/10 hover:text-slate-900',
             )
           }
         >
@@ -75,12 +75,17 @@ export default function AppShell() {
     ],
     [],
   )
+  const mobileNavItems = navItems.filter((item) =>
+    ['/dashboard', '/ventas', '/cobranza', '/inventario', '/documentos'].includes(
+      item.to,
+    ),
+  )
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
-      <div className="mx-auto flex max-w-[1440px]">
-        <aside className="sticky top-0 hidden h-screen w-72 shrink-0 border-r border-slate-200 bg-white p-4 lg:flex lg:flex-col">
-          <div className="flex items-center gap-3 rounded-2xl bg-slate-900 px-3 py-3 text-white">
+      <div className="flex w-full">
+        <aside className="sticky top-0 hidden h-screen w-72 shrink-0 border-r border-slate-200 bg-gradient-to-b from-brand-soft via-white to-brand-soft p-4 lg:flex lg:flex-col">
+          <div className="flex items-center gap-3 rounded-2xl bg-brand px-3 py-3 text-white">
             <div className="grid h-9 w-9 place-items-center rounded-xl bg-white/10 text-sm font-semibold">
               C
             </div>
@@ -155,7 +160,7 @@ export default function AppShell() {
                 onClick={() => setMobileOpen(false)}
                 aria-label="Cerrar menú"
               />
-              <div className="absolute left-0 top-0 h-full w-[min(20rem,85vw)] bg-white p-4 shadow-xl">
+              <div className="absolute left-0 top-0 h-full w-full max-w-[22rem] overflow-y-auto bg-gradient-to-b from-brand-soft via-white to-brand-soft p-4 pb-6 shadow-xl sm:w-[min(20rem,85vw)]">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-sm font-semibold">Menú</div>
                   <button
@@ -178,9 +183,32 @@ export default function AppShell() {
             </div>
           ) : null}
 
-          <main className="flex-1 p-4 lg:p-6">
+          <main className="flex-1 p-4 pb-20 lg:p-6 lg:pb-6">
             <Outlet />
           </main>
+
+          <nav className="fixed bottom-0 left-0 right-0 z-20 border-t border-slate-200 bg-white lg:hidden">
+            <div className="mx-auto flex max-w-[32rem] items-center justify-around px-2 py-2">
+              {mobileNavItems.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.end}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex flex-col items-center gap-1 px-2 py-1 text-[10px] font-medium text-slate-500',
+                      isActive ? 'text-brand' : 'hover:text-slate-700',
+                    )
+                  }
+                >
+                  <item.icon className="h-5 w-5" aria-hidden="true" />
+                  <span className="max-w-[4.5rem] truncate text-center leading-none">
+                    {item.label}
+                  </span>
+                </NavLink>
+              ))}
+            </div>
+          </nav>
         </div>
       </div>
     </div>
