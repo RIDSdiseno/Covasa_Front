@@ -36,31 +36,31 @@ export default function LoginPage() {
           alt=""
           className="h-full w-full object-cover"
         />
-        <div className="absolute inset-0 bg-slate-950/60" />
+        <div className="absolute inset-0 bg-[rgba(0,0,0,var(--login-overlay-alpha))] backdrop-blur-[var(--login-overlay-blur)]" />
       </div>
 
       <div className="relative mx-auto flex min-h-screen max-w-[1200px] items-center justify-center p-4 lg:justify-end">
-        <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 text-slate-900 shadow-2xl">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white shadow-sm">
+        <div className="w-full max-w-md rounded-3xl border border-[color:rgba(0,0,0,var(--login-card-border-alpha))] bg-[rgba(255,255,255,var(--login-card-alpha))] p-8 text-[color:var(--login-text)] shadow-[var(--login-card-shadow)] backdrop-blur-[var(--login-card-blur)]">
+          <div className="flex flex-col items-center text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-[#F3D7CB] bg-[#FFF4EE] shadow-md ring-1 ring-black/5">
               <img
                 src="/img/logo.png"
                 alt="COVASA"
-                className="h-7 w-7 object-contain"
+                className="h-10 w-10 object-contain"
               />
             </div>
-            <div>
-              <div className="text-lg font-semibold leading-tight text-slate-900">
+            <div className="mt-4">
+              <div className="text-xl font-semibold leading-tight tracking-tight text-[color:var(--login-text)]">
                 COVASA
               </div>
-              <div className="text-xs text-slate-800">
+              <div className="mt-1 text-sm text-[color:var(--login-label)]">
                 Iniciar sesión al sistema
               </div>
             </div>
           </div>
 
           <form
-            className="mt-6 space-y-4"
+            className="mt-7 space-y-4"
             onSubmit={(event) => {
               event.preventDefault()
               setError(null)
@@ -78,27 +78,27 @@ export default function LoginPage() {
               navigate(redirectTo, { replace: true })
             }}
           >
-            <label className="grid gap-1 text-sm">
-              <span className="text-xs font-semibold text-slate-900">
+            <label className="grid gap-2 text-sm">
+              <span className="text-xs font-semibold text-[color:var(--login-label)]">
                 Correo
               </span>
               <input
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                className="h-11 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none ring-brand/40 focus:ring-2"
+                className="h-11 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-[color:var(--login-text)] outline-none ring-brand/40 placeholder:text-slate-500/70 focus:ring-2"
                 placeholder="xlazo@covasachile.cl"
                 autoComplete="email"
               />
             </label>
 
-            <label className="grid gap-1 text-sm">
-              <span className="text-xs font-semibold text-slate-900">
+            <label className="grid gap-2 text-sm">
+              <span className="text-xs font-semibold text-[color:var(--login-label)]">
                 Contraseña
               </span>
               <input
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                className="h-11 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none ring-brand/40 focus:ring-2"
+                className="h-11 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-[color:var(--login-text)] outline-none ring-brand/40 placeholder:text-slate-500/70 focus:ring-2"
                 placeholder="••••••••"
                 type="password"
                 autoComplete="current-password"

@@ -33,7 +33,7 @@ function SidebarNav({
   onNavigate?: () => void
 }) {
   return (
-    <nav className="space-y-1">
+    <nav className="space-y-1.5">
       {items.map((item) => (
         <NavLink
           key={item.to}
@@ -42,15 +42,27 @@ function SidebarNav({
           onClick={onNavigate}
           className={({ isActive }) =>
             cn(
-              'flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors',
+              'group relative flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium transition-colors',
               isActive
-                ? 'bg-brand text-white'
-                : 'text-slate-700 hover:bg-brand/10 hover:text-slate-900',
+                ? 'bg-[var(--sidebar-soft)] text-[var(--sidebar-primary)] hover:text-[var(--sidebar-primary-hover)] before:absolute before:left-2 before:top-1/2 before:h-6 before:w-1 before:-translate-y-1/2 before:rounded-full before:bg-[var(--sidebar-primary)]'
+                : 'text-[var(--sidebar-text)] hover:bg-[var(--sidebar-hover)]',
             )
           }
         >
-          <item.icon className="h-4 w-4" aria-hidden="true" />
-          {item.label}
+          {({ isActive }) => (
+            <>
+              <item.icon
+                className={cn(
+                  'h-4 w-4 shrink-0',
+                  isActive
+                    ? 'text-[var(--sidebar-primary)] group-hover:text-[var(--sidebar-primary-hover)]'
+                    : 'text-[var(--sidebar-muted)] group-hover:text-[var(--sidebar-text)]',
+                )}
+                aria-hidden="true"
+              />
+              {item.label}
+            </>
+          )}
         </NavLink>
       ))}
     </nav>
@@ -84,16 +96,20 @@ export default function AppShell() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <div className="flex w-full">
-        <aside className="sticky top-0 hidden h-screen w-72 shrink-0 border-r border-slate-200 bg-gradient-to-b from-brand-soft via-white to-brand-soft p-4 lg:flex lg:flex-col">
-          <div className="flex items-center gap-3 rounded-2xl bg-brand px-3 py-3 text-white">
-            <div className="grid h-9 w-9 place-items-center rounded-xl bg-white/10 text-sm font-semibold">
-              C
+        <aside className="sticky top-0 hidden h-screen w-72 shrink-0 border-r border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] p-4 text-[var(--sidebar-text)] lg:flex lg:flex-col">
+          <div className="flex items-center gap-3 rounded-2xl border border-[var(--sidebar-border)] bg-[var(--sidebar-soft)] px-3.5 py-3 shadow-sm">
+            <div className="grid h-12 w-12 place-items-center rounded-xl border border-[var(--sidebar-border)] bg-white shadow-sm">
+              <img
+                src="/img/logo.png"
+                alt="COVASA"
+                className="h-8 w-10 object-contain"
+              />
             </div>
             <div className="min-w-0">
-              <div className="truncate text-sm font-semibold leading-tight">
+              <div className="truncate text-sm font-semibold leading-tight text-[var(--sidebar-text)]">
                 COVASA
               </div>
-              <div className="truncate text-xs text-white/80">
+              <div className="truncate text-xs text-[var(--sidebar-muted)]">
                 Gestión de cobranza y ventas
               </div>
             </div>
@@ -103,9 +119,11 @@ export default function AppShell() {
             <SidebarNav items={navItems} />
           </div>
 
-          <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
-            <div className="font-medium text-slate-900">Contacto</div>
-            <div className="mt-1 break-all">xlazo@covasachile.cl</div>
+          <div className="mt-6 rounded-2xl border border-[var(--sidebar-border)] bg-white p-3.5 text-xs">
+            <div className="font-medium text-[var(--sidebar-text)]">Contacto</div>
+            <div className="mt-1 break-all text-[var(--sidebar-muted)]">
+              xlazo@covasachile.cl
+            </div>
           </div>
         </aside>
 
@@ -160,7 +178,7 @@ export default function AppShell() {
                 onClick={() => setMobileOpen(false)}
                 aria-label="Cerrar menú"
               />
-              <div className="absolute left-0 top-0 h-full w-full max-w-[22rem] overflow-y-auto bg-gradient-to-b from-brand-soft via-white to-brand-soft p-4 pb-6 shadow-xl sm:w-[min(20rem,85vw)]">
+              <div className="absolute left-0 top-0 h-full w-full max-w-[22rem] overflow-y-auto border-r border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] p-4 pb-6 text-[var(--sidebar-text)] shadow-xl sm:w-[min(20rem,85vw)]">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-sm font-semibold">Menú</div>
                   <button
@@ -196,8 +214,10 @@ export default function AppShell() {
                   end={item.end}
                   className={({ isActive }) =>
                     cn(
-                      'flex flex-col items-center gap-1 px-2 py-1 text-[10px] font-medium text-slate-500',
-                      isActive ? 'text-brand' : 'hover:text-slate-700',
+                      'flex flex-col items-center gap-1 px-2 py-1 text-[10px] font-medium text-[var(--sidebar-muted)]',
+                      isActive
+                        ? 'text-[var(--sidebar-primary)]'
+                        : 'hover:text-[var(--sidebar-text)]',
                     )
                   }
                 >

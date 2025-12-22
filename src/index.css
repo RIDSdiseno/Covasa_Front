@@ -16,3 +16,24 @@ body {
   background-color: #fbfbfb;
   color: #222222;
 }
+
+:root {
+  --login-card-alpha: 0.94;
+  --login-card-blur: 10px;
+  --login-card-border-alpha: 0.08;
+  --login-card-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+  --login-text: #111827;
+  --login-label: #374151;
+
+  --login-overlay-alpha: 0.4;
+  --login-overlay-blur: 0px;
+
+  --sidebar-primary: #e64a19;
+  --sidebar-primary-hover: #d84315;
+  --sidebar-soft: #ffe3d6;
+  --sidebar-bg: #fff4ee;
+  --sidebar-text: #1f2937;
+  --sidebar-muted: #6b7280;
+  --sidebar-border: #f3d7cb;
+  --sidebar-hover: #fff0e8;
+}
