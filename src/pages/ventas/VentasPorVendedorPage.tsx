@@ -6,22 +6,22 @@ const rows = [
 
 export default function VentasPorVendedorPage() {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm">
       <div className="text-sm font-semibold">Resumen por vendedor (demo)</div>
 
-      <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
+      <div className="mt-4 overflow-x-auto rounded-xl border border-[var(--border)]">
         <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-xs font-medium text-slate-600">
+          <thead className="bg-[var(--hover)] text-xs font-medium text-[var(--text-secondary)]">
             <tr>
               <th className="px-3 py-2">Vendedor</th>
               <th className="px-3 py-2">Ventas</th>
               <th className="px-3 py-2">Cobradas</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-200">
+          <tbody className="divide-y divide-[var(--border)]">
             {rows.map((row) => (
-              <tr key={row.vendedor} className="bg-white">
-                <td className="px-3 py-2 font-medium text-slate-900">
+              <tr key={row.vendedor} className="bg-[var(--surface)]">
+                <td className="px-3 py-2 font-medium text-[var(--text-primary)]">
                   {row.vendedor}
                 </td>
                 <td className="px-3 py-2">
@@ -38,3 +38,6 @@ export default function VentasPorVendedorPage() {
     </div>
   )
 }
+
+
+

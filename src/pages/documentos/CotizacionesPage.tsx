@@ -295,11 +295,11 @@ export default function CotizacionesPage() {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="text-sm font-semibold">Cotizaciones</div>
-            <div className="mt-1 text-xs text-slate-600">
+            <div className="mt-1 text-xs text-[var(--text-secondary)]">
               Arrastra tarjetas entre columnas para cambiar el estado. Para
               pasar a facturar, debes subir un documento.
             </div>
@@ -321,8 +321,8 @@ export default function CotizacionesPage() {
             <div
               key={column.key}
               className={cn(
-                'rounded-2xl border border-slate-200 bg-slate-50 p-3',
-                highlighted ? 'ring-2 ring-slate-300' : null,
+                'rounded-2xl border border-[var(--border)] bg-[var(--hover)] p-3',
+                highlighted ? 'ring-2 ring-primary' : null,
               )}
               onDragOver={(event) => {
                 event.preventDefault()
@@ -332,14 +332,14 @@ export default function CotizacionesPage() {
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <div className="text-sm font-semibold text-slate-900">
+                  <div className="text-sm font-semibold text-[var(--text-primary)]">
                     {column.label}
                   </div>
-                  <div className="mt-1 text-xs text-slate-600">
+                  <div className="mt-1 text-xs text-[var(--text-secondary)]">
                     {column.helper}
                   </div>
                 </div>
-                <div className="rounded-xl bg-white px-2 py-1 text-xs font-semibold text-slate-700 shadow-sm">
+                <div className="rounded-xl bg-[var(--surface)] px-2 py-1 text-xs font-semibold text-[var(--text-primary)] shadow-sm">
                   {items.length}
                 </div>
               </div>
@@ -355,27 +355,27 @@ export default function CotizacionesPage() {
                       }
                       onDragEnd={handleDragEnd}
                       className={cn(
-                        'group rounded-2xl border border-slate-200 bg-white p-3 shadow-sm',
+                        'group rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-3 shadow-sm',
                         draggingId === cotizacion.id
                           ? 'opacity-60'
-                          : 'hover:border-slate-300',
+                          : 'hover:border-[var(--border)]',
                       )}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
                           <div className="flex items-start gap-2">
-                            <div className="mt-0.5 text-slate-400">
+                            <div className="mt-0.5 text-[var(--text-secondary)]">
                               <GripVertical
                                 className="h-4 w-4"
                                 aria-hidden="true"
                               />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <div className="truncate text-sm font-semibold text-slate-900">
+                              <div className="truncate text-sm font-semibold text-[var(--text-primary)]">
                                 {cotizacion.cliente}
                               </div>
-                              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600">
-                                <span className="font-medium text-slate-700">
+                              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--text-secondary)]">
+                                <span className="font-medium text-[var(--text-primary)]">
                                   {cotizacion.id.slice(0, 8).toUpperCase()}
                                 </span>
                                 <span>{cotizacion.creadaEl}</span>
@@ -387,17 +387,17 @@ export default function CotizacionesPage() {
                       </div>
 
                       {cotizacion.documento ? (
-                        <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                        <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-[var(--hover)] px-3 py-2 text-xs text-[var(--text-primary)]">
                           <div className="flex min-w-0 items-center gap-2">
                             <FileText
-                              className="h-4 w-4 text-slate-500"
+                              className="h-4 w-4 text-[var(--text-secondary)]"
                               aria-hidden="true"
                             />
                             <span className="truncate">
                               {cotizacion.documento.name}
                             </span>
                           </div>
-                          <div className="shrink-0 text-slate-500">
+                          <div className="shrink-0 text-[var(--text-secondary)]">
                             {formatFileSize(cotizacion.documento.size)}
                           </div>
                         </div>
@@ -405,7 +405,7 @@ export default function CotizacionesPage() {
                     </div>
                   ))
                 ) : (
-                  <div className="rounded-2xl border border-dashed border-slate-200 bg-white/60 p-4 text-xs text-slate-600">
+                  <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface-60)] p-4 text-xs text-[var(--text-secondary)]">
                     Suelta aquí una cotización.
                   </div>
                 )}
@@ -423,12 +423,12 @@ export default function CotizacionesPage() {
         >
           <button
             type="button"
-            className="absolute inset-0 bg-slate-950/40"
+            className="absolute inset-0 bg-[var(--overlay)]"
             onClick={closeFinalizeDialog}
             aria-label="Cerrar"
           />
 
-          <div className="relative w-full max-w-lg rounded-2xl bg-white p-4 shadow-xl">
+          <div className="relative w-full max-w-lg rounded-2xl bg-[var(--surface)] p-4 shadow-xl">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold">Pasar a facturar</div>
               <Button
@@ -441,22 +441,22 @@ export default function CotizacionesPage() {
               </Button>
             </div>
 
-            <div className="mt-2 text-sm text-slate-700">
+            <div className="mt-2 text-sm text-[var(--text-primary)]">
               Para mover la cotización a{' '}
               <span className="font-semibold">Para facturar</span>, sube un
               documento (Excel, Word o imagen).
             </div>
 
             {cotizacionToFinalize ? (
-              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                <div className="text-xs font-medium text-slate-600">
+              <div className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--hover)] px-4 py-3">
+                <div className="text-xs font-medium text-[var(--text-secondary)]">
                   Cotización
                 </div>
-                <div className="mt-1 text-sm font-semibold text-slate-900">
+                <div className="mt-1 text-sm font-semibold text-[var(--text-primary)]">
                   {cotizacionToFinalize.cliente}
                 </div>
-                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600">
-                  <span className="font-medium text-slate-700">
+                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--text-secondary)]">
+                  <span className="font-medium text-[var(--text-primary)]">
                     {cotizacionToFinalize.id.slice(0, 8).toUpperCase()}
                   </span>
                   <span>{cotizacionToFinalize.creadaEl}</span>
@@ -465,10 +465,10 @@ export default function CotizacionesPage() {
               </div>
             ) : null}
 
-            <label className="mt-4 flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm text-slate-700 hover:bg-slate-100">
-              <Upload className="h-5 w-5 text-slate-600" aria-hidden="true" />
+            <label className="mt-4 flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--border)] bg-[var(--hover)] px-4 py-6 text-center text-sm text-[var(--text-primary)] hover:bg-[var(--hover)]">
+              <Upload className="h-5 w-5 text-[var(--text-secondary)]" aria-hidden="true" />
               <div className="mt-2 font-semibold">Seleccionar archivo</div>
-              <div className="mt-1 text-xs text-slate-500">
+              <div className="mt-1 text-xs text-[var(--text-secondary)]">
                 XLS/XLSX, DOC/DOCX o imágenes
               </div>
               <input
@@ -485,10 +485,10 @@ export default function CotizacionesPage() {
             </label>
 
             {finalizeDialog.file ? (
-              <div className="mt-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+              <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text-primary)]">
                 <div className="flex items-center justify-between gap-3">
                   <span className="truncate">{finalizeDialog.file.name}</span>
-                  <span className="shrink-0 text-xs text-slate-500">
+                  <span className="shrink-0 text-xs text-[var(--text-secondary)]">
                     {formatFileSize(finalizeDialog.file.size)}
                   </span>
                 </div>
@@ -518,3 +518,6 @@ export default function CotizacionesPage() {
     </div>
   )
 }
+
+
+

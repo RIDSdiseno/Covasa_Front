@@ -188,7 +188,7 @@ export default function InventarioStockPage() {
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="text-sm font-semibold">Stock y alertas (demo)</div>
         <Button variant="secondary" onClick={openCreateDialog} className="px-3">
@@ -197,9 +197,9 @@ export default function InventarioStockPage() {
         </Button>
       </div>
 
-      <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
+      <div className="mt-4 overflow-x-auto rounded-xl border border-[var(--border)]">
         <table className="w-full min-w-[720px] text-left text-sm">
-          <thead className="bg-slate-50 text-xs font-medium text-slate-600">
+          <thead className="bg-[var(--hover)] text-xs font-medium text-[var(--text-secondary)]">
             <tr>
               <th className="px-3 py-2">Foto</th>
               <th className="px-3 py-2">ID inventario</th>
@@ -211,28 +211,28 @@ export default function InventarioStockPage() {
               <th className="px-3 py-2 text-right">Acciones</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-200">
+          <tbody className="divide-y divide-[var(--border)]">
             {rows.map((row) => {
               const low = row.stock < row.minimo
               return (
-                <tr key={row.id} className="bg-white">
+                <tr key={row.id} className="bg-[var(--surface)]">
                   <td className="px-3 py-2">
                     {row.foto ? (
                       <img
                         src={row.foto}
                         alt={`Foto de ${row.producto}`}
-                        className="h-10 w-10 rounded-xl border border-slate-200 object-cover"
+                        className="h-10 w-10 rounded-xl border border-[var(--border)] object-cover"
                         loading="lazy"
                       />
                     ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 text-[10px] font-medium uppercase text-slate-500">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-dashed border-[var(--border)] bg-[var(--hover)] text-[10px] font-medium uppercase text-[var(--text-secondary)]">
                         Sin foto
                       </div>
                     )}
                   </td>
                   <td className="px-3 py-2">{row.inventarioId}</td>
                   <td className="px-3 py-2">{row.sku}</td>
-                  <td className="px-3 py-2 font-medium text-slate-900">
+                  <td className="px-3 py-2 font-medium text-[var(--text-primary)]">
                     {row.producto}
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums">
@@ -275,11 +275,11 @@ export default function InventarioStockPage() {
         >
           <button
             type="button"
-            className="absolute inset-0 bg-slate-950/40"
+            className="absolute inset-0 bg-[var(--overlay)]"
             onClick={closeDialog}
             aria-label="Cerrar"
           />
-          <div className="relative w-full max-w-xl rounded-2xl bg-white p-4 shadow-xl">
+          <div className="relative w-full max-w-xl rounded-2xl bg-[var(--surface)] p-4 shadow-xl">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold">
                 {dialogMode === 'create'
@@ -299,7 +299,7 @@ export default function InventarioStockPage() {
             <form className="mt-4 space-y-4" onSubmit={handleSubmit}>
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="space-y-1">
-                  <div className="text-xs font-medium text-slate-700">SKU</div>
+                  <div className="text-xs font-medium text-[var(--text-primary)]">SKU</div>
                   <input
                     value={draft.sku}
                     onChange={(event) =>
@@ -308,14 +308,14 @@ export default function InventarioStockPage() {
                         sku: event.target.value,
                       }))
                     }
-                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm shadow-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
+                    className="h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm shadow-sm focus:border-[var(--primary)] focus:outline-none focus:ring-2 ring-primary"
                     placeholder="SKU-004"
                     autoComplete="off"
                     required
                   />
                 </label>
                 <label className="space-y-1">
-                  <div className="text-xs font-medium text-slate-700">
+                  <div className="text-xs font-medium text-[var(--text-primary)]">
                     Precio
                   </div>
                   <input
@@ -326,7 +326,7 @@ export default function InventarioStockPage() {
                         precio: event.target.value,
                       }))
                     }
-                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm shadow-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
+                    className="h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm shadow-sm focus:border-[var(--primary)] focus:outline-none focus:ring-2 ring-primary"
                     placeholder="0"
                     inputMode="numeric"
                     type="number"
@@ -338,7 +338,7 @@ export default function InventarioStockPage() {
               </div>
 
               <label className="space-y-1">
-                <div className="text-xs font-medium text-slate-700">
+                <div className="text-xs font-medium text-[var(--text-primary)]">
                   ID de inventario
                 </div>
                 <input
@@ -349,7 +349,7 @@ export default function InventarioStockPage() {
                       inventarioId: event.target.value,
                     }))
                   }
-                  className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm shadow-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
+                  className="h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm shadow-sm focus:border-[var(--primary)] focus:outline-none focus:ring-2 ring-primary"
                   placeholder="INV-004"
                   autoComplete="off"
                   required
@@ -357,7 +357,7 @@ export default function InventarioStockPage() {
               </label>
 
               <label className="space-y-1">
-                <div className="text-xs font-medium text-slate-700">
+                <div className="text-xs font-medium text-[var(--text-primary)]">
                   Producto
                 </div>
                 <input
@@ -368,7 +368,7 @@ export default function InventarioStockPage() {
                       producto: event.target.value,
                     }))
                   }
-                  className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm shadow-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
+                  className="h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm shadow-sm focus:border-[var(--primary)] focus:outline-none focus:ring-2 ring-primary"
                   placeholder="Nombre del producto"
                   autoComplete="off"
                   required
@@ -376,7 +376,7 @@ export default function InventarioStockPage() {
               </label>
 
               <label className="space-y-1">
-                <div className="text-xs font-medium text-slate-700">
+                <div className="text-xs font-medium text-[var(--text-primary)]">
                   Foto (URL)
                 </div>
                 <input
@@ -387,7 +387,7 @@ export default function InventarioStockPage() {
                       foto: event.target.value,
                     }))
                   }
-                  className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm shadow-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
+                  className="h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm shadow-sm focus:border-[var(--primary)] focus:outline-none focus:ring-2 ring-primary"
                   placeholder="https://..."
                   autoComplete="off"
                   type="url"
@@ -396,7 +396,7 @@ export default function InventarioStockPage() {
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="space-y-1">
-                  <div className="text-xs font-medium text-slate-700">
+                  <div className="text-xs font-medium text-[var(--text-primary)]">
                     Stock
                   </div>
                   <input
@@ -407,7 +407,7 @@ export default function InventarioStockPage() {
                         stock: event.target.value,
                       }))
                     }
-                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm shadow-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
+                    className="h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm shadow-sm focus:border-[var(--primary)] focus:outline-none focus:ring-2 ring-primary"
                     placeholder="0"
                     inputMode="numeric"
                     type="number"
@@ -417,7 +417,7 @@ export default function InventarioStockPage() {
                   />
                 </label>
                 <label className="space-y-1">
-                  <div className="text-xs font-medium text-slate-700">
+                  <div className="text-xs font-medium text-[var(--text-primary)]">
                     Mínimo
                   </div>
                   <input
@@ -428,7 +428,7 @@ export default function InventarioStockPage() {
                         minimo: event.target.value,
                       }))
                     }
-                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm shadow-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
+                    className="h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm shadow-sm focus:border-[var(--primary)] focus:outline-none focus:ring-2 ring-primary"
                     placeholder="0"
                     inputMode="numeric"
                     type="number"
@@ -460,3 +460,6 @@ export default function InventarioStockPage() {
     </div>
   )
 }
+
+
+

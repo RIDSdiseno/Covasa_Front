@@ -4,36 +4,118 @@
 @tailwind components;
 @tailwind utilities;
 
-html,
-body,
-#root {
-  height: 100%;
+@layer base {
+  :root {
+    --primary: #e64a19;
+    --primary-hover: #d84315;
+    --primary-soft: #ffe3d6;
+    --app-bg: #fff4ee;
+    --surface: #ffffff;
+    --surface-80: rgba(255, 255, 255, 0.8);
+    --surface-60: rgba(255, 255, 255, 0.6);
+    --text-primary: #1f2937;
+    --text-secondary: #6b7280;
+    --border: #f3d7cb;
+    --hover: #fff0e8;
+    --ring: rgba(230, 74, 25, 0.3);
+    --overlay: rgba(31, 41, 55, 0.4);
+
+    --login-card-alpha: 0.94;
+    --login-card-blur: 10px;
+    --login-card-border-alpha: 0.08;
+    --login-card-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+    --login-text: var(--text-primary);
+    --login-label: var(--text-secondary);
+    --login-overlay-alpha: 0.4;
+    --login-overlay-blur: 0px;
+
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-hover: var(--primary-hover);
+    --sidebar-soft: var(--primary-soft);
+    --sidebar-bg: var(--app-bg);
+    --sidebar-text: var(--text-primary);
+    --sidebar-muted: var(--text-secondary);
+    --sidebar-border: var(--border);
+    --sidebar-hover: var(--hover);
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    font-family: 'Poppins', 'Open Sans', sans-serif;
+    background-color: var(--app-bg);
+    color: var(--text-primary);
+  }
 }
 
-body {
-  margin: 0;
-  font-family: 'Poppins', 'Open Sans', sans-serif;
-  background-color: #fbfbfb;
-  color: #222222;
+@layer components {
+  .app-bg {
+    background-color: var(--app-bg);
+    color: var(--text-primary);
+  }
+
+  .card-surface {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    box-shadow: 0 1px 2px rgba(31, 41, 55, 0.08);
+  }
+
+  .card-soft {
+    background-color: var(--hover);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+  }
+
+  .btn-primary {
+    background-color: var(--primary);
+    color: #ffffff;
+  }
+  .btn-primary:hover {
+    background-color: var(--primary-hover);
+  }
+
+  .btn-secondary {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+  }
+  .btn-secondary:hover {
+    background-color: var(--hover);
+  }
+
+  .input-base {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+  }
+  .input-base::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.7;
+  }
+  .input-base:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--ring);
+    outline: none;
+  }
+
+  .text-muted {
+    color: var(--text-secondary);
+  }
+
+  .chip-soft {
+    background-color: var(--primary-soft);
+    color: var(--primary);
+  }
 }
 
-:root {
-  --login-card-alpha: 0.94;
-  --login-card-blur: 10px;
-  --login-card-border-alpha: 0.08;
-  --login-card-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
-  --login-text: #111827;
-  --login-label: #374151;
-
-  --login-overlay-alpha: 0.4;
-  --login-overlay-blur: 0px;
-
-  --sidebar-primary: #e64a19;
-  --sidebar-primary-hover: #d84315;
-  --sidebar-soft: #ffe3d6;
-  --sidebar-bg: #fff4ee;
-  --sidebar-text: #1f2937;
-  --sidebar-muted: #6b7280;
-  --sidebar-border: #f3d7cb;
-  --sidebar-hover: #fff0e8;
+@layer utilities {
+  .ring-primary {
+    --tw-ring-color: var(--ring);
+  }
 }

@@ -7,27 +7,27 @@ const rows = [
 export default function CarteraPage() {
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="text-sm font-semibold">Cartera (demo)</div>
           <input
-            className="h-10 w-full max-w-xs rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none ring-slate-300 focus:ring-2"
+            className="h-10 w-full max-w-xs rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm outline-none ring-primary focus:ring-2"
             placeholder="Buscar cliente..."
           />
         </div>
 
-        <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
+        <div className="mt-4 overflow-x-auto rounded-xl border border-[var(--border)]">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-xs font-medium text-slate-600">
+            <thead className="bg-[var(--hover)] text-xs font-medium text-[var(--text-secondary)]">
               <tr>
                 <th className="px-3 py-2">Cliente</th>
                 <th className="px-3 py-2">Saldo</th>
                 <th className="px-3 py-2">Vencimiento</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200">
+            <tbody className="divide-y divide-[var(--border)]">
               {rows.map((row) => (
-                <tr key={row.cliente} className="bg-white">
+                <tr key={row.cliente} className="bg-[var(--surface)]">
                   <td className="px-3 py-2">{row.cliente}</td>
                   <td className="px-3 py-2">
                     {row.debe.toLocaleString('es-CL')}
@@ -42,3 +42,6 @@ export default function CarteraPage() {
     </div>
   )
 }
+
+
+

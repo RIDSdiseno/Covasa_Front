@@ -10,12 +10,11 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 }
 
 const base =
-  'inline-flex items-center justify-center gap-2 rounded-xl text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-brand/30 disabled:pointer-events-none disabled:opacity-50'
+  'inline-flex items-center justify-center gap-2 rounded-xl text-sm font-medium transition focus:outline-none focus:ring-2 ring-primary disabled:pointer-events-none disabled:opacity-50'
 
 const variants: Record<ButtonVariant, string> = {
-  primary: 'bg-brand text-white hover:bg-brand-dark',
-  secondary:
-    'border border-slate-200 bg-white text-slate-900 shadow-sm hover:bg-slate-50',
+  primary: 'btn-primary',
+  secondary: 'btn-secondary shadow-sm',
 }
 
 const sizes: Record<ButtonSize, string> = {
@@ -38,3 +37,6 @@ export default function Button({
     />
   )
 }
+
+
+

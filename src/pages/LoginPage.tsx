@@ -29,7 +29,7 @@ export default function LoginPage() {
   if (user) return <Navigate to="/dashboard" replace />
 
   return (
-    <div className="relative min-h-screen bg-slate-950">
+    <div className="relative min-h-screen bg-[var(--app-bg)]">
       <div className="absolute inset-0">
         <img
           src="/img/fondo_login.png"
@@ -42,7 +42,7 @@ export default function LoginPage() {
       <div className="relative mx-auto flex min-h-screen max-w-[1200px] items-center justify-center p-4 lg:justify-end">
         <div className="w-full max-w-md rounded-3xl border border-[color:rgba(0,0,0,var(--login-card-border-alpha))] bg-[rgba(255,255,255,var(--login-card-alpha))] p-8 text-[color:var(--login-text)] shadow-[var(--login-card-shadow)] backdrop-blur-[var(--login-card-blur)]">
           <div className="flex flex-col items-center text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-[#F3D7CB] bg-[#FFF4EE] shadow-md ring-1 ring-black/5">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--app-bg)] shadow-md ring-1 ring-black/5">
               <img
                 src="/img/logo.png"
                 alt="COVASA"
@@ -85,7 +85,7 @@ export default function LoginPage() {
               <input
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                className="h-11 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-[color:var(--login-text)] outline-none ring-brand/40 placeholder:text-slate-500/70 focus:ring-2"
+                className="h-11 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 text-sm text-[color:var(--login-text)] outline-none ring-primary placeholder:text-[color:var(--text-secondary)] placeholder:opacity-70 focus:ring-2"
                 placeholder="xlazo@covasachile.cl"
                 autoComplete="email"
               />
@@ -98,7 +98,7 @@ export default function LoginPage() {
               <input
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                className="h-11 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-[color:var(--login-text)] outline-none ring-brand/40 placeholder:text-slate-500/70 focus:ring-2"
+                className="h-11 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 text-sm text-[color:var(--login-text)] outline-none ring-primary placeholder:text-[color:var(--text-secondary)] placeholder:opacity-70 focus:ring-2"
                 placeholder="••••••••"
                 type="password"
                 autoComplete="current-password"
@@ -116,7 +116,7 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-5 rounded-2xl bg-slate-50 px-4 py-3 text-xs text-slate-600">
+          <div className="mt-5 rounded-2xl bg-[var(--hover)] px-4 py-3 text-xs text-[var(--text-secondary)]">
             Demo: por ahora acepta cualquier contraseña (no hay backend aún).
           </div>
         </div>
@@ -124,3 +124,6 @@ export default function LoginPage() {
     </div>
   )
 }
+
+
+

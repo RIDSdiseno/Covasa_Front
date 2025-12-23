@@ -9,6 +9,7 @@ import CobranzaPagosPage from './pages/cobranza/CobranzaPagosPage'
 import CreditosPage from './pages/cobranza/CreditosPage'
 import ConciliacionPage from './pages/ConciliacionPage'
 import ConfiguracionPage from './pages/ConfiguracionPage'
+import ClientesPage from './pages/ClientesPage'
 import DocumentosLayout from './pages/documentos/DocumentosLayout'
 import CotizacionesPage from './pages/documentos/CotizacionesPage'
 import NotasVentaPage from './pages/documentos/NotasVentaPage'
@@ -19,6 +20,7 @@ import InventarioRankingPage from './pages/inventario/InventarioRankingPage'
 import InventarioStockPage from './pages/inventario/InventarioStockPage'
 import NotFoundPage from './pages/NotFoundPage'
 import PagosPage from './pages/PagosPage'
+import TrabajadoresPage from './pages/TrabajadoresPage'
 import VentasLayout from './pages/ventas/VentasLayout'
 import CrecimientoVentasPage from './pages/ventas/CrecimientoVentasPage'
 import VentasDiariasPage from './pages/ventas/VentasDiariasPage'
@@ -54,6 +56,9 @@ export default function App() {
           <Route path="pagos" element={<CobranzaPagosPage />} />
           <Route path="creditos" element={<CreditosPage />} />
         </Route>
+
+        <Route path="clientes" element={<ClientesPage />} />
+        <Route path="trabajadores" element={<TrabajadoresPage />} />
 
         <Route path="inventario" element={<InventarioLayout />}>
           <Route index element={<Navigate to="stock" replace />} />

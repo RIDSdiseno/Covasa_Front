@@ -12,6 +12,8 @@ import {
   Menu,
   Settings,
   ShoppingCart,
+  UserCog,
+  Users,
   X,
 } from 'lucide-react'
 import { useAuth } from '../auth/auth'
@@ -79,6 +81,8 @@ export default function AppShell() {
       { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, end: true },
       { to: '/ventas', label: 'Ventas', icon: ShoppingCart },
       { to: '/cobranza', label: 'Cobranza', icon: HandCoins },
+      { to: '/clientes', label: 'Clientes', icon: Users },
+      { to: '/trabajadores', label: 'Trabajadores', icon: UserCog },
       { to: '/inventario', label: 'Inventario', icon: Boxes },
       { to: '/documentos', label: 'Documentos', icon: FileText },
       { to: '/conciliacion', label: 'Conciliación', icon: Banknote },
@@ -94,11 +98,11 @@ export default function AppShell() {
   )
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-[var(--app-bg)] text-[var(--text-primary)]">
       <div className="flex w-full">
         <aside className="sticky top-0 hidden h-screen w-72 shrink-0 border-r border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] p-4 text-[var(--sidebar-text)] lg:flex lg:flex-col">
           <div className="flex items-center gap-3 rounded-2xl border border-[var(--sidebar-border)] bg-[var(--sidebar-soft)] px-3.5 py-3 shadow-sm">
-            <div className="grid h-12 w-12 place-items-center rounded-xl border border-[var(--sidebar-border)] bg-white shadow-sm">
+            <div className="grid h-12 w-12 place-items-center rounded-xl border border-[var(--sidebar-border)] bg-[var(--surface)] shadow-sm">
               <img
                 src="/img/logo.png"
                 alt="COVASA"
@@ -119,7 +123,7 @@ export default function AppShell() {
             <SidebarNav items={navItems} />
           </div>
 
-          <div className="mt-6 rounded-2xl border border-[var(--sidebar-border)] bg-white p-3.5 text-xs">
+          <div className="mt-6 rounded-2xl border border-[var(--sidebar-border)] bg-[var(--surface)] p-3.5 text-xs">
             <div className="font-medium text-[var(--sidebar-text)]">Contacto</div>
             <div className="mt-1 break-all text-[var(--sidebar-muted)]">
               xlazo@covasachile.cl
@@ -128,11 +132,11 @@ export default function AppShell() {
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/80 backdrop-blur">
+          <header className="sticky top-0 z-10 border-b border-[var(--border)] bg-[var(--surface-80)] backdrop-blur">
             <div className="flex h-14 items-center gap-3 px-4 lg:px-6">
               <button
                 type="button"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-900 shadow-sm transition hover:bg-slate-50 lg:hidden"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] shadow-sm transition hover:bg-[var(--hover)] lg:hidden"
                 onClick={() => setMobileOpen(true)}
                 aria-label="Abrir menú"
               >
@@ -143,14 +147,14 @@ export default function AppShell() {
                 <div className="truncate text-sm font-semibold">
                   COVASA — Sistema de gestión
                 </div>
-                <div className="truncate text-xs text-slate-600">
+                <div className="truncate text-xs text-[var(--text-secondary)]">
                   Ventas, cobranza, inventario y conciliación
                 </div>
               </div>
 
               {user ? (
                 <div className="flex items-center gap-2">
-                  <div className="hidden max-w-[14rem] truncate text-xs text-slate-600 sm:block">
+                  <div className="hidden max-w-[14rem] truncate text-xs text-[var(--text-secondary)] sm:block">
                     {user.email}
                   </div>
                   <Button
@@ -174,7 +178,7 @@ export default function AppShell() {
             <div className="fixed inset-0 z-50 lg:hidden" role="dialog">
               <button
                 type="button"
-                className="absolute inset-0 bg-slate-950/40"
+                className="absolute inset-0 bg-[var(--overlay)]"
                 onClick={() => setMobileOpen(false)}
                 aria-label="Cerrar menú"
               />
@@ -183,7 +187,7 @@ export default function AppShell() {
                   <div className="text-sm font-semibold">Menú</div>
                   <button
                     type="button"
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-900 shadow-sm transition hover:bg-slate-50"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] shadow-sm transition hover:bg-[var(--hover)]"
                     onClick={() => setMobileOpen(false)}
                     aria-label="Cerrar menú"
                   >
@@ -205,7 +209,7 @@ export default function AppShell() {
             <Outlet />
           </main>
 
-          <nav className="fixed bottom-0 left-0 right-0 z-20 border-t border-slate-200 bg-white lg:hidden">
+          <nav className="fixed bottom-0 left-0 right-0 z-20 border-t border-[var(--border)] bg-[var(--surface)] lg:hidden">
             <div className="mx-auto flex max-w-[32rem] items-center justify-around px-2 py-2">
               {mobileNavItems.map((item) => (
                 <NavLink
@@ -234,3 +238,6 @@ export default function AppShell() {
     </div>
   )
 }
+
+
+
