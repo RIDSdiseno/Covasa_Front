@@ -18,6 +18,7 @@ import DocumentosLayout from "./pages/documentos/DocumentosLayout";
 import CotizacionesPage from "./pages/documentos/CotizacionesPage";
 import CotizacionesListPage from "./pages/documentos/CotizacionesListPage";
 import FacturasPage from "./pages/documentos/FacturasPage";
+import CotizacionWebPage from "./pages/CotizacionWebPage";
 
 import InventarioLayout from "./pages/inventario/InventarioLayout";
 import InventarioMovimientosPage from "./pages/inventario/InventarioMovimientosPage";
@@ -91,6 +92,8 @@ export default function App() {
 
           <Route path="facturas" element={<FacturasPage />} />
         </Route>
+
+        <Route path="cotizacion-web" element={<CotizacionWebPage />} />
 
         <Route path="conciliacion" element={<ConciliacionPage />} />
         <Route path="pagos" element={<PagosPage />} />
