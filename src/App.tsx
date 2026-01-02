@@ -1,31 +1,43 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
-import RequireAuth from './auth/RequireAuth'
-import AppShell from './layout/AppShell'
-import DashboardPage from './pages/DashboardPage'
-import LoginPage from './pages/LoginPage'
-import CobranzaLayout from './pages/cobranza/CobranzaLayout'
-import CarteraPage from './pages/cobranza/CarteraPage'
-import CobranzaPagosPage from './pages/cobranza/CobranzaPagosPage'
-import CreditosPage from './pages/cobranza/CreditosPage'
-import ConciliacionPage from './pages/ConciliacionPage'
-import ConfiguracionPage from './pages/ConfiguracionPage'
-import ClientesPage from './pages/ClientesPage'
-import DocumentosLayout from './pages/documentos/DocumentosLayout'
-import CotizacionesPage from './pages/documentos/CotizacionesPage'
-import NotasVentaPage from './pages/documentos/NotasVentaPage'
-import FacturasPage from './pages/documentos/FacturasPage'
-import InventarioLayout from './pages/inventario/InventarioLayout'
-import InventarioMovimientosPage from './pages/inventario/InventarioMovimientosPage'
-import InventarioRankingPage from './pages/inventario/InventarioRankingPage'
-import InventarioStockPage from './pages/inventario/InventarioStockPage'
-import NotFoundPage from './pages/NotFoundPage'
-import PagosPage from './pages/PagosPage'
-import TrabajadoresPage from './pages/TrabajadoresPage'
-import VentasLayout from './pages/ventas/VentasLayout'
-import CrecimientoVentasPage from './pages/ventas/CrecimientoVentasPage'
-import VentasDiariasPage from './pages/ventas/VentasDiariasPage'
-import VentasMensualPage from './pages/ventas/VentasMensualPage'
-import VentasPorVendedorPage from './pages/ventas/VentasPorVendedorPage'
+import { Navigate, Route, Routes } from "react-router-dom";
+import RequireAuth from "./auth/RequireAuth";
+import AppShell from "./layout/AppShell";
+
+import DashboardPage from "./pages/DashboardPage";
+import LoginPage from "./pages/LoginPage";
+
+import CobranzaLayout from "./pages/cobranza/CobranzaLayout";
+import CarteraPage from "./pages/cobranza/CarteraPage";
+import CobranzaPagosPage from "./pages/cobranza/CobranzaPagosPage";
+import CreditosPage from "./pages/cobranza/CreditosPage";
+
+import ConciliacionPage from "./pages/ConciliacionPage";
+import ConfiguracionPage from "./pages/ConfiguracionPage";
+import ClientesPage from "./pages/ClientesPage";
+
+import DocumentosLayout from "./pages/documentos/DocumentosLayout";
+import CotizacionesPage from "./pages/documentos/CotizacionesPage";
+import CotizacionesListPage from "./pages/documentos/CotizacionesListPage";
+import FacturasPage from "./pages/documentos/FacturasPage";
+
+import InventarioLayout from "./pages/inventario/InventarioLayout";
+import InventarioMovimientosPage from "./pages/inventario/InventarioMovimientosPage";
+import InventarioRankingPage from "./pages/inventario/InventarioRankingPage";
+import InventarioStockPage from "./pages/inventario/InventarioStockPage";
+
+import NotFoundPage from "./pages/NotFoundPage";
+import PagosPage from "./pages/PagosPage";
+import TrabajadoresPage from "./pages/TrabajadoresPage";
+
+import VentasLayout from "./pages/ventas/VentasLayout";
+import CrecimientoVentasPage from "./pages/ventas/CrecimientoVentasPage";
+import VentasDiariasPage from "./pages/ventas/VentasDiariasPage";
+import VentasMensualPage from "./pages/ventas/VentasMensualPage";
+import VentasPorVendedorPage from "./pages/ventas/VentasPorVendedorPage";
+
+// ✅ Fletes (layout + tabs)
+import FletesLayout from "./pages/fletes/FletesLayout";
+import FletesPage from "./pages/fletes/FletesPage";
+import FletesEstadoPage from "./pages/fletes/FletesEstadoPage";
 
 export default function App() {
   return (
@@ -67,10 +79,16 @@ export default function App() {
           <Route path="ranking" element={<InventarioRankingPage />} />
         </Route>
 
+        {/* ✅ DOCUMENTOS */}
         <Route path="documentos" element={<DocumentosLayout />}>
           <Route index element={<Navigate to="cotizaciones" replace />} />
+
+          {/* ✅ Principal: CotizacionesPage */}
           <Route path="cotizaciones" element={<CotizacionesPage />} />
-          <Route path="notas-venta" element={<NotasVentaPage />} />
+
+          {/* ✅ Reemplaza "nota de ventas": listado tabla */}
+          <Route path="notas-venta" element={<CotizacionesListPage />} />
+
           <Route path="facturas" element={<FacturasPage />} />
         </Route>
 
@@ -78,8 +96,14 @@ export default function App() {
         <Route path="pagos" element={<PagosPage />} />
         <Route path="configuracion" element={<ConfiguracionPage />} />
 
+        {/* ✅ Fletes con pestañas */}
+        <Route path="fletes" element={<FletesLayout />}>
+          <Route index element={<FletesPage />} />
+          <Route path="estado" element={<FletesEstadoPage />} />
+        </Route>
+
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
-  )
+  );
 }

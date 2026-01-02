@@ -1,296 +1,316 @@
-import { FileText, GripVertical, Upload, X } from 'lucide-react'
-import { useEffect, useMemo, useState, type DragEvent } from 'react'
-import Button from '../../components/ui/Button'
-import { cn } from '../../lib/cn'
+// src/pages/cotizaciones/CotizacionesPage.tsx
+import { GripVertical, Sparkles, ExternalLink, Plus } from "lucide-react";
+import { useEffect, useMemo, useState, type DragEvent } from "react";
+import { useNavigate } from "react-router-dom";
+import Button from "../../components/ui/Button";
+import { cn } from "../../lib/cn";
+import CreateCotizacionModal from "./CreateCotizacionModal";
 
-type CotizacionStatus = 'pendiente' | 'en_proceso' | 'realizada'
+type ApiEstadoCotizacion = "NUEVA" | "EN_REVISION" | "RESPONDIDA" | "CERRADA";
 
-type DocumentoAdjunto = {
-  name: string
-  type: string
-  size: number
-  uploadedAt: string
-  file?: File
+type ApiCotizacionListItem = {
+  id: string;
+  codigo: string;
+  correlativo: number;
+  origen: string;
+
+  clienteId: string | null;
+
+  nombreContacto: string;
+  email: string;
+  telefono: string;
+  empresa: string | null;
+  rut: string | null;
+
+  subtotalNeto: number;
+  iva: number;
+  total: number;
+
+  estado: ApiEstadoCotizacion;
+
+  createdAt: string;
+  updatedAt: string;
+
+  itemsCount?: number;
+
+  Cliente?: { id: string; nombre: string; rut: string | null } | null;
+
+  crmCotizacionId?: string | null;
+  crmCotizacion?: { id: string } | null;
+};
+
+type ApiListResponse = {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  data: ApiCotizacionListItem[];
+};
+
+type ConvertToCrmResponse =
+  | {
+      alreadyLinked: true;
+      ecommerceCotizacionId: string;
+      crmCotizacionId: string;
+      crmCotizacion: { id: string } | null;
+    }
+  | {
+      alreadyLinked: false;
+      crmCotizacion: { id: string };
+      ecommerceCotizacion: { id: string; estado: ApiEstadoCotizacion; crmCotizacionId: string };
+    };
+
+// ✅ OJO:
+// Este API_BASE_URL asume que montaste tus rutas así:
+// app.use("/api/cotizaciones", cotizacionesRoutes)
+// Si en tu server tienes app.use("/api", cotizacionesRoutes) entonces NO existe /api/cotizaciones.
+// En ese caso, cambia el fetch a "/" (NO recomendado) o arregla el mount en backend.
+const API_BASE_URL: string =
+  (import.meta.env.VITE_API_BASE_URL as string | undefined) || "http://localhost:3000/api";
+
+const OPORTUNIDAD_ROUTE_PREFIX = "/crm/cotizaciones";
+
+async function safeJson(res: globalThis.Response): Promise<unknown> {
+  const text = await res.text();
+  if (!text) return null;
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return null;
+  }
 }
 
-type Cotizacion = {
-  id: string
-  cliente: string
-  total: number
-  creadaEl: string
-  status: CotizacionStatus
-  documento?: DocumentoAdjunto
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }
 
-type StoredCotizacion = Omit<Cotizacion, 'documento'> & {
-  documento?: Omit<DocumentoAdjunto, 'file'>
+function getErrorMessage(err: unknown, fallback: string) {
+  if (err instanceof Error && err.message) return err.message;
+  if (isRecord(err) && typeof err.message === "string") return err.message;
+  return fallback;
 }
 
-type FinalizeDialogState = {
-  cotizacionId: string
-  file: File | null
-  error: string | null
-} | null
+async function api<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...(init?.headers ?? {}),
+    },
+  });
+
+  if (res.status === 204) return undefined as T;
+
+  const data = await safeJson(res);
+
+  if (!res.ok) {
+    const msg =
+      (isRecord(data) && (typeof data.message === "string" ? data.message : "")) ||
+      `Error ${res.status} al llamar ${path}`;
+    throw new Error(msg);
+  }
+
+  return data as T;
+}
+
+/** =========================
+ *  UI model (Kanban)
+ * ========================= */
+
+type CotizacionStatus = "pendiente" | "negociacion" | "ganada" | "perdida";
+
+type UiCotizacion = {
+  id: string;
+  codigo: string;
+  cliente: string;
+  total: number;
+  creadaEl: string;
+
+  status: CotizacionStatus;
+  apiEstado: ApiEstadoCotizacion;
+
+  oportunidadId: string | null;
+};
 
 const columns: Array<{
-  key: CotizacionStatus
-  label: string
-  helper: string
+  key: CotizacionStatus;
+  label: string;
+  helper: string;
+  apiEstado: ApiEstadoCotizacion;
 }> = [
-  { key: 'pendiente', label: 'Cotizaciones', helper: 'Por iniciar' },
-  { key: 'en_proceso', label: 'Nota de ventas', helper: 'Cotización finalizada' },
-  { key: 'realizada', label: 'Para facturar', helper: 'Lista para facturar' },
-]
+  { key: "pendiente", label: "Pendiente", helper: "Por iniciar", apiEstado: "NUEVA" },
+  { key: "negociacion", label: "En negociación", helper: "Cotización en curso", apiEstado: "EN_REVISION" },
+  { key: "ganada", label: "Ganada", helper: "Cerrada como ganada", apiEstado: "CERRADA" },
+  { key: "perdida", label: "Perdida", helper: "Cerrada como perdida", apiEstado: "RESPONDIDA" },
+];
 
-function createId() {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID()
-  }
-  return `${Date.now()}-${Math.random().toString(16).slice(2)}`
+function apiEstadoToUiStatus(estado: ApiEstadoCotizacion): CotizacionStatus {
+  if (estado === "CERRADA") return "ganada";
+  if (estado === "RESPONDIDA") return "perdida";
+  if (estado === "EN_REVISION") return "negociacion";
+  return "pendiente"; // NUEVA
 }
 
-const initialCotizaciones: Cotizacion[] = [
-  {
-    id: createId(),
-    cliente: 'ACME Ltda.',
-    total: 890000,
-    creadaEl: '2025-12-16',
-    status: 'pendiente',
-  },
-  {
-    id: createId(),
-    cliente: 'Ferretería Norte',
-    total: 420000,
-    creadaEl: '2025-12-15',
-    status: 'en_proceso',
-  },
-  {
-    id: createId(),
-    cliente: 'Distribuidora Sur',
-    total: 1320000,
-    creadaEl: '2025-12-14',
-    status: 'pendiente',
-  },
-]
-
-const STORAGE_KEY = 'covasa.cotizaciones'
-const validStatuses: CotizacionStatus[] = ['pendiente', 'en_proceso', 'realizada']
-
-function loadCotizaciones(): Cotizacion[] {
-  if (typeof window === 'undefined') return initialCotizaciones
-  try {
-    const stored = window.localStorage.getItem(STORAGE_KEY)
-    if (!stored) return initialCotizaciones
-    const parsed = JSON.parse(stored) as StoredCotizacion[]
-    if (!Array.isArray(parsed)) return initialCotizaciones
-
-    const sanitized = parsed.flatMap((item) => {
-      if (!item || typeof item !== 'object') return []
-      const { id, cliente, total, creadaEl, status, documento } =
-        item as Partial<StoredCotizacion>
-      if (
-        typeof id !== 'string' ||
-        typeof cliente !== 'string' ||
-        typeof total !== 'number' ||
-        typeof creadaEl !== 'string' ||
-        typeof status !== 'string' ||
-        !validStatuses.includes(status as CotizacionStatus)
-      ) {
-        return []
-      }
-
-      const cotizacion: Cotizacion = {
-        id,
-        cliente,
-        total,
-        creadaEl,
-        status: status as CotizacionStatus,
-      }
-
-      if (documento && typeof documento === 'object') {
-        const { name, type, size, uploadedAt } =
-          documento as Partial<DocumentoAdjunto>
-        if (typeof name === 'string' && typeof size === 'number') {
-          cotizacion.documento = {
-            name,
-            type: typeof type === 'string' ? type : '',
-            size,
-            uploadedAt:
-              typeof uploadedAt === 'string' ? uploadedAt : new Date().toISOString(),
-          }
-        }
-      }
-
-      return [cotizacion]
-    })
-
-    return sanitized.length ? sanitized : initialCotizaciones
-  } catch {
-    return initialCotizaciones
-  }
-}
-
-function serializeCotizaciones(cotizaciones: Cotizacion[]): StoredCotizacion[] {
-  return cotizaciones.map(({ documento, ...rest }) => ({
-    ...rest,
-    documento: documento
-      ? {
-          name: documento.name,
-          type: documento.type,
-          size: documento.size,
-          uploadedAt: documento.uploadedAt,
-        }
-      : undefined,
-  }))
-}
-
-function formatFileSize(bytes: number) {
-  if (!Number.isFinite(bytes) || bytes <= 0) return '0 B'
-  const units = ['B', 'KB', 'MB', 'GB']
-  const exponent = Math.min(
-    Math.floor(Math.log(bytes) / Math.log(1024)),
-    units.length - 1,
-  )
-  const value = bytes / 1024 ** exponent
-  const decimals = value >= 10 || exponent === 0 ? 0 : 1
-  return `${value.toFixed(decimals)} ${units[exponent]}`
+function uiStatusToApiEstado(status: CotizacionStatus): ApiEstadoCotizacion {
+  const col = columns.find((c) => c.key === status);
+  return col?.apiEstado ?? "NUEVA";
 }
 
 export default function CotizacionesPage() {
-  const [cotizaciones, setCotizaciones] =
-    useState<Cotizacion[]>(() => loadCotizaciones())
-  const [draggingId, setDraggingId] = useState<string | null>(null)
-  const [dropTarget, setDropTarget] = useState<CotizacionStatus | null>(null)
-  const [finalizeDialog, setFinalizeDialog] = useState<FinalizeDialogState>(
-    null,
-  )
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    try {
-      window.localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(serializeCotizaciones(cotizaciones)),
-      )
-    } catch {
-      // Ignore storage errors.
-    }
-  }, [cotizaciones])
+  const [openCreate, setOpenCreate] = useState(false);
+
+  const [items, setItems] = useState<UiCotizacion[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [busyMove, setBusyMove] = useState<boolean>(false);
+
+  const [busyOpo, setBusyOpo] = useState<Record<string, boolean>>({});
+  const [error, setError] = useState<string | null>(null);
+
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<CotizacionStatus | null>(null);
 
   const money = useMemo(
     () =>
-      new Intl.NumberFormat('es-CL', {
-        style: 'currency',
-        currency: 'CLP',
+      new Intl.NumberFormat("es-CL", {
+        style: "currency",
+        currency: "CLP",
         maximumFractionDigits: 0,
       }),
-    [],
-  )
+    []
+  );
 
-  const cotizacionToFinalize = finalizeDialog
-    ? cotizaciones.find((cotizacion) => cotizacion.id === finalizeDialog.cotizacionId) ??
-      null
-    : null
+  function toUi(row: ApiCotizacionListItem): UiCotizacion {
+    const clienteNombre = row.Cliente?.nombre || row.empresa || row.nombreContacto || "Sin nombre";
+    const oportunidadId = row.crmCotizacionId ?? row.crmCotizacion?.id ?? null;
 
-  function addCotizacion() {
-    const nueva: Cotizacion = {
-      id: createId(),
-      cliente: 'Nuevo cliente',
-      total: 0,
-      creadaEl: new Date().toISOString().slice(0, 10),
-      status: 'pendiente',
+    return {
+      id: row.id,
+      codigo: row.codigo,
+      cliente: clienteNombre,
+      total: Number(row.total ?? 0),
+      creadaEl: (row.createdAt ?? "").slice(0, 10),
+      apiEstado: row.estado,
+      status: apiEstadoToUiStatus(row.estado),
+      oportunidadId,
+    };
+  }
+
+  async function load(): Promise<void> {
+    setLoading(true);
+    setError(null);
+    try {
+      // ✅ requiere backend en /api/cotizaciones (mount recomendado)
+      const resp = await api<ApiListResponse>("/cotizaciones?page=1&pageSize=200");
+      const list = (resp?.data ?? []).map(toUi);
+      list.sort((a, b) => (b.creadaEl || "").localeCompare(a.creadaEl || ""));
+      setItems(list);
+    } catch (e: unknown) {
+      setError(getErrorMessage(e, "No se pudieron cargar las cotizaciones"));
+    } finally {
+      setLoading(false);
     }
-    setCotizaciones((current) => [nueva, ...current])
   }
 
-  function moveCotizacion(cotizacionId: string, status: CotizacionStatus) {
-    setCotizaciones((current) =>
-      current.map((cotizacion) =>
-        cotizacion.id === cotizacionId ? { ...cotizacion, status } : cotizacion,
-      ),
-    )
+  useEffect(() => {
+    void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function openOportunidad(oportunidadId: string) {
+    navigate(`${OPORTUNIDAD_ROUTE_PREFIX}/${oportunidadId}`);
   }
 
-  function openFinalizeDialog(cotizacionId: string) {
-    setDraggingId(null)
-    setDropTarget(null)
-    setFinalizeDialog({ cotizacionId, file: null, error: null })
-  }
+  async function patchEstado(cotizacionId: string, estado: ApiEstadoCotizacion) {
+    setBusyMove(true);
+    setError(null);
 
-  function closeFinalizeDialog() {
-    setFinalizeDialog(null)
-  }
-
-  function handleConfirmFinalize() {
-    if (!finalizeDialog) return
-    if (!finalizeDialog.file) {
-      setFinalizeDialog((current) =>
-        current
-          ? {
-              ...current,
-              error: 'Debes subir un documento (Excel, Word o imagen).',
-            }
-          : current,
+    // optimistic UI
+    setItems((current) =>
+      current.map((it) =>
+        it.id === cotizacionId ? { ...it, apiEstado: estado, status: apiEstadoToUiStatus(estado) } : it
       )
-      return
-    }
+    );
 
-    const file = finalizeDialog.file
-    const documento: DocumentoAdjunto = {
-      name: file.name,
-      type: file.type,
-      size: file.size,
-      uploadedAt: new Date().toISOString(),
-      file,
+    try {
+      await api(`/cotizaciones/${cotizacionId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ estado }),
+      });
+    } catch (e: unknown) {
+      setError(getErrorMessage(e, "No se pudo cambiar el estado"));
+      await load();
+    } finally {
+      setBusyMove(false);
     }
+  }
 
-    setCotizaciones((current) =>
-      current.map((cotizacion) =>
-        cotizacion.id === finalizeDialog.cotizacionId
-          ? { ...cotizacion, status: 'realizada', documento }
-          : cotizacion,
-      ),
-    )
-    setFinalizeDialog(null)
+  async function createOportunidad(cotizacionId: string) {
+    if (busyMove) return;
+    setError(null);
+
+    setBusyOpo((p) => {
+      if (p[cotizacionId]) return p;
+      return { ...p, [cotizacionId]: true };
+    });
+
+    const prev = items;
+    setItems((current) => current.map((it) => (it.id === cotizacionId ? { ...it } : it)));
+
+    try {
+      const resp = await api<ConvertToCrmResponse>(`/cotizaciones/${cotizacionId}/convert-to-crm`, {
+        method: "POST",
+      });
+
+      const oppId =
+        "alreadyLinked" in resp && resp.alreadyLinked ? resp.crmCotizacionId : resp.crmCotizacion.id;
+
+      // al crear oportunidad lo dejamos en negociación (EN_REVISION)
+      setItems((current) =>
+        current.map((it) =>
+          it.id === cotizacionId
+            ? {
+                ...it,
+                oportunidadId: oppId,
+                apiEstado: "EN_REVISION",
+                status: apiEstadoToUiStatus("EN_REVISION"),
+              }
+            : it
+        )
+      );
+
+      void load();
+    } catch (e: unknown) {
+      setItems(prev);
+      setError(getErrorMessage(e, "No se pudo crear la oportunidad"));
+    } finally {
+      setBusyOpo((p) => ({ ...p, [cotizacionId]: false }));
+    }
   }
 
   function handleDrop(status: CotizacionStatus, cotizacionId: string) {
-    if (status === 'realizada') {
-      const cotizacion = cotizaciones.find((item) => item.id === cotizacionId)
-      if (cotizacion?.documento) {
-        moveCotizacion(cotizacionId, 'realizada')
-        return
-      }
-      openFinalizeDialog(cotizacionId)
-      return
-    }
-
-    moveCotizacion(cotizacionId, status)
+    if (busyMove) return;
+    void patchEstado(cotizacionId, uiStatusToApiEstado(status));
   }
 
-  function handleDropOnColumn(
-    status: CotizacionStatus,
-    event: DragEvent<HTMLDivElement>,
-  ) {
-    event.preventDefault()
-    setDropTarget(null)
-    const cotizacionId = event.dataTransfer.getData('text/plain') || draggingId
-    if (!cotizacionId) return
-    handleDrop(status, cotizacionId)
+  function handleDropOnColumn(status: CotizacionStatus, event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setDropTarget(null);
+    const cotizacionId = event.dataTransfer.getData("text/plain") || draggingId;
+    if (!cotizacionId) return;
+    handleDrop(status, cotizacionId);
   }
 
-  function handleDragStart(
-    cotizacionId: string,
-    event: DragEvent<HTMLDivElement>,
-  ) {
-    setDraggingId(cotizacionId)
-    event.dataTransfer.setData('text/plain', cotizacionId)
-    event.dataTransfer.effectAllowed = 'move'
+  function handleDragStart(cotizacionId: string, event: DragEvent<HTMLDivElement>) {
+    setDraggingId(cotizacionId);
+    event.dataTransfer.setData("text/plain", cotizacionId);
+    event.dataTransfer.effectAllowed = "move";
   }
 
   function handleDragEnd() {
-    setDraggingId(null)
-    setDropTarget(null)
+    setDraggingId(null);
+    setDropTarget(null);
   }
 
   return (
@@ -300,110 +320,133 @@ export default function CotizacionesPage() {
           <div>
             <div className="text-sm font-semibold">Cotizaciones</div>
             <div className="mt-1 text-xs text-[var(--text-secondary)]">
-              Arrastra tarjetas entre columnas para cambiar el estado. Para
-              pasar a facturar, debes subir un documento.
+              Kanban conectado al backend. Estados: <b>Pendiente</b>, <b>En negociación</b>, <b>Ganada</b>, <b>Perdida</b>.
+              Desde cada tarjeta puedes crear una <b>Oportunidad</b> (CRM).
             </div>
           </div>
-          <Button variant="secondary" onClick={addCotizacion} className="px-3">
-            Nueva cotización
-          </Button>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Button onClick={() => setOpenCreate(true)} disabled={loading || busyMove} className="px-3">
+              <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
+              Nueva cotización
+            </Button>
+
+            <Button variant="secondary" onClick={() => void load()} className="px-3" disabled={loading || busyMove}>
+              {loading ? "Cargando..." : "Refrescar"}
+            </Button>
+          </div>
         </div>
       </div>
 
+      {error ? (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>
+      ) : null}
+
       <div className="grid grid-flow-col auto-cols-[minmax(18rem,1fr)] gap-4 overflow-x-auto pb-2">
         {columns.map((column) => {
-          const items = cotizaciones.filter(
-            (cotizacion) => cotizacion.status === column.key,
-          )
-          const highlighted = dropTarget === column.key
+          const colItems = items.filter((it) => it.status === column.key);
+          const highlighted = dropTarget === column.key;
 
           return (
             <div
               key={column.key}
               className={cn(
-                'rounded-2xl border border-[var(--border)] bg-[var(--hover)] p-3',
-                highlighted ? 'ring-2 ring-primary' : null,
+                "rounded-2xl border border-[var(--border)] bg-[var(--hover)] p-3",
+                highlighted ? "ring-2 ring-primary" : null
               )}
               onDragOver={(event) => {
-                event.preventDefault()
-                if (dropTarget !== column.key) setDropTarget(column.key)
+                event.preventDefault();
+                if (dropTarget !== column.key) setDropTarget(column.key);
               }}
               onDrop={(event) => handleDropOnColumn(column.key, event)}
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <div className="text-sm font-semibold text-[var(--text-primary)]">
-                    {column.label}
-                  </div>
-                  <div className="mt-1 text-xs text-[var(--text-secondary)]">
-                    {column.helper}
-                  </div>
+                  <div className="text-sm font-semibold text-[var(--text-primary)]">{column.label}</div>
+                  <div className="mt-1 text-xs text-[var(--text-secondary)]">{column.helper}</div>
                 </div>
                 <div className="rounded-xl bg-[var(--surface)] px-2 py-1 text-xs font-semibold text-[var(--text-primary)] shadow-sm">
-                  {items.length}
+                  {colItems.length}
                 </div>
               </div>
 
               <div className="mt-3 space-y-3">
-                {items.length ? (
-                  items.map((cotizacion) => (
-                    <div
-                      key={cotizacion.id}
-                      draggable
-                      onDragStart={(event) =>
-                        handleDragStart(cotizacion.id, event)
-                      }
-                      onDragEnd={handleDragEnd}
-                      className={cn(
-                        'group rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-3 shadow-sm',
-                        draggingId === cotizacion.id
-                          ? 'opacity-60'
-                          : 'hover:border-[var(--border)]',
-                      )}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-start gap-2">
-                            <div className="mt-0.5 text-[var(--text-secondary)]">
-                              <GripVertical
-                                className="h-4 w-4"
-                                aria-hidden="true"
-                              />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="truncate text-sm font-semibold text-[var(--text-primary)]">
-                                {cotizacion.cliente}
+                {loading ? (
+                  <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface-60)] p-4 text-xs text-[var(--text-secondary)]">
+                    Cargando...
+                  </div>
+                ) : colItems.length ? (
+                  colItems.map((cotizacion) => {
+                    const creatingOpp = Boolean(busyOpo[cotizacion.id]);
+
+                    return (
+                      <div
+                        key={cotizacion.id}
+                        draggable={!busyMove}
+                        onDragStart={(event) => handleDragStart(cotizacion.id, event)}
+                        onDragEnd={handleDragEnd}
+                        className={cn(
+                          "group rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-3 shadow-sm",
+                          draggingId === cotizacion.id ? "opacity-60" : "hover:border-[var(--border)]",
+                          busyMove ? "cursor-not-allowed opacity-80" : null
+                        )}
+                        title={busyMove ? "Procesando..." : undefined}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-start gap-2">
+                              <div className="mt-0.5 text-[var(--text-secondary)]">
+                                <GripVertical className="h-4 w-4" aria-hidden="true" />
                               </div>
-                              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--text-secondary)]">
-                                <span className="font-medium text-[var(--text-primary)]">
-                                  {cotizacion.id.slice(0, 8).toUpperCase()}
-                                </span>
-                                <span>{cotizacion.creadaEl}</span>
-                                <span>{money.format(cotizacion.total)}</span>
+
+                              <div className="min-w-0 flex-1">
+                                <div className="truncate text-sm font-semibold text-[var(--text-primary)]">
+                                  {cotizacion.cliente}
+                                </div>
+
+                                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--text-secondary)]">
+                                  <span className="font-medium text-[var(--text-primary)]">{cotizacion.codigo}</span>
+                                  <span>{cotizacion.creadaEl}</span>
+                                  <span>{money.format(cotizacion.total)}</span>
+                                </div>
                               </div>
                             </div>
                           </div>
+                        </div>
+
+                        {/* Oportunidad */}
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          {cotizacion.oportunidadId ? (
+                            <>
+                              <span className="rounded-full bg-[var(--primary-soft)] px-2 py-1 text-[11px] font-medium text-[var(--primary)]">
+                                Oportunidad creada
+                              </span>
+
+                              <Button
+                                variant="secondary"
+                                onClick={() => openOportunidad(cotizacion.oportunidadId!)}
+                                className="h-8 px-2 text-xs"
+                              >
+                                <ExternalLink className="mr-1 h-4 w-4" aria-hidden="true" />
+                                Ver
+                              </Button>
+                            </>
+                          ) : (
+                            <Button
+                              variant="secondary"
+                              onClick={() => void createOportunidad(cotizacion.id)}
+                              disabled={creatingOpp || busyMove}
+                              title="Crea una CrmCotizacion y la vincula a esta cotización"
+                              className="h-8 px-2 text-xs"
+                            >
+                              <Sparkles className="mr-1 h-4 w-4" aria-hidden="true" />
+                              {creatingOpp ? "Creando..." : "Crear oportunidad"}
+                            </Button>
+                          )}
                         </div>
                       </div>
-
-                      {cotizacion.documento ? (
-                        <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-[var(--hover)] px-3 py-2 text-xs text-[var(--text-primary)]">
-                          <div className="flex min-w-0 items-center gap-2">
-                            <FileText
-                              className="h-4 w-4 text-[var(--text-secondary)]"
-                              aria-hidden="true"
-                            />
-                            <span className="truncate">
-                              {cotizacion.documento.name}
-                            </span>
-                          </div>
-                          <div className="shrink-0 text-[var(--text-secondary)]">
-                            {formatFileSize(cotizacion.documento.size)}
-                          </div>
-                        </div>
-                      ) : null}
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface-60)] p-4 text-xs text-[var(--text-secondary)]">
                     Suelta aquí una cotización.
@@ -411,113 +454,16 @@ export default function CotizacionesPage() {
                 )}
               </div>
             </div>
-          )
+          );
         })}
       </div>
 
-      {finalizeDialog ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          role="dialog"
-          aria-modal="true"
-        >
-          <button
-            type="button"
-            className="absolute inset-0 bg-[var(--overlay)]"
-            onClick={closeFinalizeDialog}
-            aria-label="Cerrar"
-          />
-
-          <div className="relative w-full max-w-lg rounded-2xl bg-[var(--surface)] p-4 shadow-xl">
-            <div className="flex items-center justify-between gap-3">
-              <div className="text-sm font-semibold">Pasar a facturar</div>
-              <Button
-                variant="secondary"
-                size="icon"
-                onClick={closeFinalizeDialog}
-                aria-label="Cerrar"
-              >
-                <X className="h-4 w-4" aria-hidden="true" />
-              </Button>
-            </div>
-
-            <div className="mt-2 text-sm text-[var(--text-primary)]">
-              Para mover la cotización a{' '}
-              <span className="font-semibold">Para facturar</span>, sube un
-              documento (Excel, Word o imagen).
-            </div>
-
-            {cotizacionToFinalize ? (
-              <div className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--hover)] px-4 py-3">
-                <div className="text-xs font-medium text-[var(--text-secondary)]">
-                  Cotización
-                </div>
-                <div className="mt-1 text-sm font-semibold text-[var(--text-primary)]">
-                  {cotizacionToFinalize.cliente}
-                </div>
-                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--text-secondary)]">
-                  <span className="font-medium text-[var(--text-primary)]">
-                    {cotizacionToFinalize.id.slice(0, 8).toUpperCase()}
-                  </span>
-                  <span>{cotizacionToFinalize.creadaEl}</span>
-                  <span>{money.format(cotizacionToFinalize.total)}</span>
-                </div>
-              </div>
-            ) : null}
-
-            <label className="mt-4 flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--border)] bg-[var(--hover)] px-4 py-6 text-center text-sm text-[var(--text-primary)] hover:bg-[var(--hover)]">
-              <Upload className="h-5 w-5 text-[var(--text-secondary)]" aria-hidden="true" />
-              <div className="mt-2 font-semibold">Seleccionar archivo</div>
-              <div className="mt-1 text-xs text-[var(--text-secondary)]">
-                XLS/XLSX, DOC/DOCX o imágenes
-              </div>
-              <input
-                className="sr-only"
-                type="file"
-                accept=".xls,.xlsx,.doc,.docx,image/*,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                onChange={(event) => {
-                  const file = event.target.files?.[0] ?? null
-                  setFinalizeDialog((current) =>
-                    current ? { ...current, file, error: null } : current,
-                  )
-                }}
-              />
-            </label>
-
-            {finalizeDialog.file ? (
-              <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text-primary)]">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="truncate">{finalizeDialog.file.name}</span>
-                  <span className="shrink-0 text-xs text-[var(--text-secondary)]">
-                    {formatFileSize(finalizeDialog.file.size)}
-                  </span>
-                </div>
-              </div>
-            ) : null}
-
-            {finalizeDialog.error ? (
-              <div className="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
-                {finalizeDialog.error}
-              </div>
-            ) : null}
-
-            <div className="mt-4 flex items-center justify-end gap-2">
-              <Button variant="secondary" onClick={closeFinalizeDialog}>
-                Cancelar
-              </Button>
-              <Button
-                onClick={handleConfirmFinalize}
-                disabled={!finalizeDialog.file}
-              >
-                Enviar a facturar
-              </Button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      {/* Modal crear cotización */}
+      <CreateCotizacionModal
+        open={openCreate}
+        onClose={() => setOpenCreate(false)}
+        onCreated={() => void load()}
+      />
     </div>
-  )
+  );
 }
-
-
-
