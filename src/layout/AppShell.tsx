@@ -359,7 +359,7 @@ export default function AppShell() {
 
           <div className="mt-6 rounded-2xl border border-[var(--sidebar-border)] bg-[var(--surface)] p-3.5 text-xs">
             <div className="font-medium text-[var(--sidebar-text)]">Contacto</div>
-            <div className="mt-1 break-all text-[var(--sidebar-muted)]">xlazo@covasachile.cl</div>
+            <div className="mt-1 break-all text-[var(--sidebar-muted)]">admin@covasachile.cl</div>
           </div>
         </aside>
 

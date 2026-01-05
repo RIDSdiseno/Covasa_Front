@@ -86,7 +86,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 className="h-11 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 text-sm text-[color:var(--login-text)] outline-none ring-primary placeholder:text-[color:var(--text-secondary)] placeholder:opacity-70 focus:ring-2"
-                placeholder="xlazo@covasachile.cl"
+                placeholder="admin@covasachile.cl"
                 autoComplete="email"
               />
             </label>
