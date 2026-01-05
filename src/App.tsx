@@ -19,6 +19,8 @@ import CotizacionesPage from "./pages/documentos/CotizacionesPage";
 import CotizacionesListPage from "./pages/documentos/CotizacionesListPage";
 import FacturasPage from "./pages/documentos/FacturasPage";
 import CotizacionWebPage from "./pages/CotizacionWebPage";
+import CrmCotizacionesPage from "./pages/crm/CrmCotizacionesPage";
+import CrmCotizacionDetailPage from "./pages/crm/CrmCotizacionDetailPage";
 
 import InventarioLayout from "./pages/inventario/InventarioLayout";
 import InventarioMovimientosPage from "./pages/inventario/InventarioMovimientosPage";
@@ -92,6 +94,9 @@ export default function App() {
 
           <Route path="facturas" element={<FacturasPage />} />
         </Route>
+
+        <Route path="cotizaciones" element={<CrmCotizacionesPage />} />
+        <Route path="cotizaciones/:id" element={<CrmCotizacionDetailPage />} />
 
         <Route path="cotizacion-web" element={<CotizacionWebPage />} />
 
