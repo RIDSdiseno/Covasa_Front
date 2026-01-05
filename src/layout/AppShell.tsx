@@ -13,6 +13,7 @@ import {
   LogOut,
   Menu,
   Settings,
+  ShoppingBag,
   ShoppingCart,
   UserCog,
   Users,
@@ -324,6 +325,7 @@ export default function AppShell() {
       { to: '/inventario', label: 'Inventario', icon: Boxes },
       { to: '/fletes', label: 'Fletes', icon: Truck },
       { to: '/documentos', label: 'Documentos', icon: FileText },
+      { to: '/cotizaciones', label: 'Cotizacion web', icon: ShoppingBag },
       { to: '/conciliacion', label: 'Conciliación', icon: Banknote },
       { to: '/pagos', label: 'Pagos', icon: CreditCard },
       { to: '/configuracion', label: 'Configuración', icon: Settings },
@@ -353,13 +355,13 @@ export default function AppShell() {
             </div>
           </div>
 
-          <div className="mt-6 flex-1">
+          <div className="mt-6 flex-1 min-h-0 overflow-y-auto pr-1">
             <SidebarNav items={navItems} />
           </div>
 
           <div className="mt-6 rounded-2xl border border-[var(--sidebar-border)] bg-[var(--surface)] p-3.5 text-xs">
             <div className="font-medium text-[var(--sidebar-text)]">Contacto</div>
-            <div className="mt-1 break-all text-[var(--sidebar-muted)]">admin@covasachile.cl</div>
+            <div className="mt-1 break-all text-[var(--sidebar-muted)]">contacto@ejemplo.cl</div>
           </div>
         </aside>
 
