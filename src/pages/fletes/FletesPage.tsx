@@ -1,20 +1,20 @@
 // src/pages/fletes/FletesPage.tsx
-import { Plus, Pencil, Trash2, Search, X, Loader2 } from "lucide-react";
-import { useMemo, useState, type FormEvent } from "react";
+import { Plus, Pencil, Trash2, Search, X, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Button from "../../components/ui/Button";
 
 /* =========================
-   Types (mock)
+   Types (API)
 ========================= */
 
-type FleteTarifa = {
+type ApiFleteTarifa = {
   id: string;
   nombre: string;
-  zona?: string | null;
-  destino?: string | null;
+  zona: string | null;
+  destino: string | null;
   precio: number; // CLP
   activo: boolean;
-  observacion?: string | null;
+  observacion: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -30,51 +30,60 @@ type Draft = {
 
 type DialogMode = "create" | "edit";
 
+type ApiErrorBody = {
+  error?: string;
+  message?: string;
+  issues?: Array<{ path?: Array<string | number>; message?: string }>;
+};
+
+type ApiError = Error & {
+  status?: number;
+  body?: ApiErrorBody;
+};
+
 /* =========================
-   Mock data
+   API helper
 ========================= */
 
-function uid() {
-  return crypto.randomUUID();
+const API_BASE_URL: string =
+  (import.meta.env.VITE_API_BASE_URL as string | undefined) || "http://localhost:3000/api";
+
+async function safeJson(res: Response): Promise<unknown> {
+  const text = await res.text();
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
 }
 
-const nowISO = () => new Date().toISOString();
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === "object" && v !== null;
+}
 
-const MOCK_FLETES: FleteTarifa[] = [
-  {
-    id: uid(),
-    nombre: "Flete RM (Santiago)",
-    zona: "RM",
-    destino: "Santiago Centro",
-    precio: 18000,
-    activo: true,
-    observacion: "Incluye descarga estándar (hasta 30 min).",
-    createdAt: nowISO(),
-    updatedAt: nowISO(),
-  },
-  {
-    id: uid(),
-    nombre: "Flete V Región (Viña/Valpo)",
-    zona: "V REGION",
-    destino: "Viña del Mar",
-    precio: 35000,
-    activo: true,
-    observacion: null,
-    createdAt: nowISO(),
-    updatedAt: nowISO(),
-  },
-  {
-    id: uid(),
-    nombre: "Flete VI Región",
-    zona: "VI REGION",
-    destino: "Rancagua",
-    precio: 42000,
-    activo: false,
-    observacion: "Tarifa descontinuada, usar lista 2026.",
-    createdAt: nowISO(),
-    updatedAt: nowISO(),
-  },
-];
+function getErrorMessage(err: unknown, fallback: string) {
+  if (err instanceof Error && err.message) return err.message;
+  if (isRecord(err) && typeof err.message === "string") return err.message;
+  return fallback;
+}
+
+async function api<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    ...init,
+    headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
+  });
+
+  if (!res.ok) {
+    const body = (await safeJson(res)) as ApiErrorBody | null;
+    const err: ApiError = new Error(body?.error || body?.message || `HTTP ${res.status}`);
+    err.status = res.status;
+    err.body = body ?? undefined;
+    throw err;
+  }
+
+  return (await safeJson(res)) as T;
+}
 
 /* =========================
    Helpers
@@ -95,7 +104,7 @@ function parseClpInt(s: string) {
   return Math.trunc(n);
 }
 
-function toDraft(f?: FleteTarifa): Draft {
+function toDraft(f?: ApiFleteTarifa): Draft {
   return {
     nombre: f?.nombre ?? "",
     zona: f?.zona ?? "",
@@ -107,14 +116,21 @@ function toDraft(f?: FleteTarifa): Draft {
 }
 
 /* =========================
-   Page (MOCK) - TAB "Tarifas"
-   (El header + pestañas viven en FletesLayout)
+   Page - CRUD + paginación cliente (10)
 ========================= */
 
+const PAGE_SIZE = 10;
+
 export default function FletesPage() {
-  const [items, setItems] = useState<FleteTarifa[]>(() => MOCK_FLETES);
+  const [items, setItems] = useState<ApiFleteTarifa[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
   const [query, setQuery] = useState("");
   const [onlyActive, setOnlyActive] = useState(false);
+
+  // paginación
+  const [page, setPage] = useState(1);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<DialogMode>("create");
@@ -136,6 +152,24 @@ export default function FletesPage() {
     [],
   );
 
+  async function load() {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      // Traemos todo y paginamos cliente (10) como pediste
+      const data = await api<ApiFleteTarifa[]>("/fletes");
+      setItems(Array.isArray(data) ? data : []);
+    } catch (e: unknown) {
+      setLoadError(getErrorMessage(e, "No se pudieron cargar los fletes."));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void load();
+  }, []);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return items
@@ -148,10 +182,36 @@ export default function FletesPage() {
           (f.destino ?? "").toLowerCase().includes(q)
         );
       })
-      .sort((a, b) =>
-        a.activo === b.activo ? a.nombre.localeCompare(b.nombre) : a.activo ? -1 : 1,
-      );
+      .sort((a, b) => (a.activo === b.activo ? a.nombre.localeCompare(b.nombre) : a.activo ? -1 : 1));
   }, [items, query, onlyActive]);
+
+  // reset page cuando cambian filtros/búsqueda
+  useEffect(() => {
+    setPage(1);
+  }, [query, onlyActive]);
+
+  const totalItems = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+
+  const pageItems = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return filtered.slice(start, start + PAGE_SIZE);
+  }, [filtered, page]);
+
+  const showingFrom = totalItems === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const showingTo = Math.min(page * PAGE_SIZE, totalItems);
+
+  function clampPage(p: number) {
+    return Math.min(Math.max(1, p), totalPages);
+  }
+
+  function goPrev() {
+    setPage((p) => clampPage(p - 1));
+  }
+
+  function goNext() {
+    setPage((p) => clampPage(p + 1));
+  }
 
   function openCreate() {
     setDialogMode("create");
@@ -161,7 +221,7 @@ export default function FletesPage() {
     setDialogOpen(true);
   }
 
-  function openEdit(f: FleteTarifa) {
+  function openEdit(f: ApiFleteTarifa) {
     setDialogMode("edit");
     setEditingId(f.id);
     setDraft(toDraft(f));
@@ -179,17 +239,8 @@ export default function FletesPage() {
     const precio = parseClpInt(draft.precio);
 
     if (!nombre) return { ok: false as const, message: "El nombre es obligatorio." };
-    if (nombre.length < 3)
-      return { ok: false as const, message: "El nombre debe tener al menos 3 caracteres." };
+    if (nombre.length < 3) return { ok: false as const, message: "El nombre debe tener al menos 3 caracteres." };
     if (precio === null) return { ok: false as const, message: "El precio debe ser un número ≥ 0." };
-
-    // nombre unique (mock)
-    const nameLower = nombre.toLowerCase();
-    const inUse = items.some((f) => {
-      if (dialogMode === "edit" && editingId && f.id === editingId) return false;
-      return f.nombre.toLowerCase() === nameLower;
-    });
-    if (inUse) return { ok: false as const, message: "Ya existe una tarifa con ese nombre." };
 
     return {
       ok: true as const,
@@ -215,51 +266,62 @@ export default function FletesPage() {
     }
 
     setSaving(true);
-
-    // mock delay para sentir “real”
-    await new Promise((r) => setTimeout(r, 450));
-
     try {
       if (dialogMode === "create") {
-        const created: FleteTarifa = {
-          id: uid(),
-          ...v.value,
-          createdAt: nowISO(),
-          updatedAt: nowISO(),
-        };
+        const created = await api<ApiFleteTarifa>("/fletes", {
+          method: "POST",
+          body: JSON.stringify(v.value),
+        });
+
+        // Insert arriba, y recalcular paginado (queremos que se vea)
         setItems((prev) => [created, ...prev]);
+        setPage(1);
         closeDialog();
       } else {
         if (!editingId) {
           setFormError("No se encontró el flete a editar.");
           return;
         }
-        setItems((prev) =>
-          prev.map((f) =>
-            f.id === editingId
-              ? {
-                  ...f,
-                  ...v.value,
-                  updatedAt: nowISO(),
-                }
-              : f,
-          ),
-        );
+        const updated = await api<ApiFleteTarifa>(`/fletes/${editingId}`, {
+          method: "PATCH",
+          body: JSON.stringify(v.value),
+        });
+
+        setItems((prev) => prev.map((x) => (x.id === editingId ? updated : x)));
         closeDialog();
       }
+    } catch (e: unknown) {
+      const msg =
+        (e as ApiError)?.body?.error ||
+        (e as ApiError)?.body?.message ||
+        getErrorMessage(e, "No se pudo guardar el flete.");
+      setFormError(msg);
     } finally {
       setSaving(false);
     }
   }
 
-  async function handleDelete(f: FleteTarifa) {
+  async function handleDelete(f: ApiFleteTarifa) {
     const ok = window.confirm(`¿Eliminar "${f.nombre}"?`);
     if (!ok) return;
 
     setDeletingId(f.id);
-    await new Promise((r) => setTimeout(r, 350));
-    setItems((prev) => prev.filter((x) => x.id !== f.id));
-    setDeletingId(null);
+    try {
+      await api<void>(`/fletes/${f.id}`, { method: "DELETE" });
+
+      setItems((prev) => prev.filter((x) => x.id !== f.id));
+
+      // si borro el último item de la última página, ajusto page
+      setPage((p) => {
+        const nextTotal = totalItems - 1;
+        const nextPages = Math.max(1, Math.ceil(nextTotal / PAGE_SIZE));
+        return Math.min(p, nextPages);
+      });
+    } catch (e: unknown) {
+      alert(getErrorMessage(e, "No se pudo eliminar."));
+    } finally {
+      setDeletingId(null);
+    }
   }
 
   const previewMoney = money.format(parseClpInt(draft.precio) ?? 0);
@@ -274,7 +336,6 @@ export default function FletesPage() {
       `}</style>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        {/* 👇 ahora es “Tarifas”, porque el layout ya muestra “Fletes” */}
         <div>
           <div className="text-sm font-semibold">Tarifas</div>
           <div className="text-[12px] text-[var(--text-secondary)]">
@@ -307,6 +368,7 @@ export default function FletesPage() {
             variant="secondary"
             onClick={openCreate}
             className="px-3 transition-transform active:scale-[0.98]"
+            disabled={loading}
           >
             <Plus className="h-4 w-4" />
             Nuevo flete
@@ -314,91 +376,123 @@ export default function FletesPage() {
         </div>
       </div>
 
-      <div className="mt-4 overflow-x-auto rounded-xl border border-[var(--border)]">
-        <table className="w-full min-w-[920px] text-left text-sm">
-          <thead className="bg-[var(--hover)] text-xs font-medium text-[var(--text-secondary)]">
-            <tr>
-              <th className="px-3 py-2">Nombre</th>
-              <th className="px-3 py-2">Zona</th>
-              <th className="px-3 py-2">Destino</th>
-              <th className="px-3 py-2 text-right">Precio</th>
-              <th className="px-3 py-2">Estado</th>
-              <th className="px-3 py-2">Obs.</th>
-              <th className="px-3 py-2 text-right">Acciones</th>
-            </tr>
-          </thead>
+      {loading ? (
+        <div className="mt-4 flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-3 text-sm text-[var(--text-secondary)]">
+          <Loader2 className="h-4 w-4 animate-spin" /> Cargando fletes...
+        </div>
+      ) : loadError ? (
+        <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-3 text-sm text-rose-800">
+          <div>{loadError}</div>
+          <Button variant="secondary" onClick={() => void load()}>
+            Reintentar
+          </Button>
+        </div>
+      ) : (
+        <>
+          <div className="mt-4 overflow-x-auto rounded-xl border border-[var(--border)]">
+            <table className="w-full min-w-[920px] text-left text-sm">
+              <thead className="bg-[var(--hover)] text-xs font-medium text-[var(--text-secondary)]">
+                <tr>
+                  <th className="px-3 py-2">Nombre</th>
+                  <th className="px-3 py-2">Zona</th>
+                  <th className="px-3 py-2">Destino</th>
+                  <th className="px-3 py-2 text-right">Precio</th>
+                  <th className="px-3 py-2">Estado</th>
+                  <th className="px-3 py-2">Obs.</th>
+                  <th className="px-3 py-2 text-right">Acciones</th>
+                </tr>
+              </thead>
 
-          <tbody className="divide-y divide-[var(--border)]">
-            {filtered.length === 0 ? (
-              <tr>
-                <td className="px-3 py-6 text-sm text-[var(--text-secondary)]" colSpan={7}>
-                  Sin registros.
-                </td>
-              </tr>
-            ) : (
-              filtered.map((f) => {
-                const deleting = deletingId === f.id;
-                return (
-                  <tr key={f.id} className="bg-[var(--surface)] transition hover:bg-[var(--hover)]">
-                    <td className="px-3 py-2 font-medium text-[var(--text-primary)]">{f.nombre}</td>
-                    <td className="px-3 py-2">{f.zona ?? "—"}</td>
-                    <td className="px-3 py-2">{f.destino ?? "—"}</td>
-                    <td className="px-3 py-2 text-right tabular-nums">{money.format(f.precio)}</td>
-                    <td className="px-3 py-2">
-                      <span
-                        className={
-                          f.activo
-                            ? "rounded-lg bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700"
-                            : "rounded-lg bg-zinc-100 px-2 py-1 text-xs font-semibold text-zinc-700"
-                        }
-                      >
-                        {f.activo ? "Activo" : "Inactivo"}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 text-[13px] text-[var(--text-secondary)]">
-                      {f.observacion ? (
-                        <span title={f.observacion}>
-                          {f.observacion.length > 44 ? `${f.observacion.slice(0, 44)}…` : f.observacion}
-                        </span>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                    <td className="px-3 py-2 text-right">
-                      <div className="inline-flex items-center gap-2">
-                        <Button
-                          variant="secondary"
-                          size="icon"
-                          onClick={() => openEdit(f)}
-                          aria-label={`Editar ${f.nombre}`}
-                          disabled={deleting}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-
-                        <Button
-                          variant="secondary"
-                          size="icon"
-                          onClick={() => void handleDelete(f)}
-                          aria-label={`Eliminar ${f.nombre}`}
-                          disabled={deleting}
-                          title="Eliminar"
-                        >
-                          {deleting ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
+              <tbody className="divide-y divide-[var(--border)]">
+                {pageItems.length === 0 ? (
+                  <tr>
+                    <td className="px-3 py-6 text-sm text-[var(--text-secondary)]" colSpan={7}>
+                      Sin registros.
                     </td>
                   </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+                ) : (
+                  pageItems.map((f) => {
+                    const deleting = deletingId === f.id;
+                    return (
+                      <tr key={f.id} className="bg-[var(--surface)] transition hover:bg-[var(--hover)]">
+                        <td className="px-3 py-2 font-medium text-[var(--text-primary)]">{f.nombre}</td>
+                        <td className="px-3 py-2">{f.zona ?? "—"}</td>
+                        <td className="px-3 py-2">{f.destino ?? "—"}</td>
+                        <td className="px-3 py-2 text-right tabular-nums">{money.format(f.precio)}</td>
+                        <td className="px-3 py-2">
+                          <span
+                            className={
+                              f.activo
+                                ? "rounded-lg bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700"
+                                : "rounded-lg bg-zinc-100 px-2 py-1 text-xs font-semibold text-zinc-700"
+                            }
+                          >
+                            {f.activo ? "Activo" : "Inactivo"}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 text-[13px] text-[var(--text-secondary)]">
+                          {f.observacion ? (
+                            <span title={f.observacion}>
+                              {f.observacion.length > 44 ? `${f.observacion.slice(0, 44)}…` : f.observacion}
+                            </span>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                        <td className="px-3 py-2 text-right">
+                          <div className="inline-flex items-center gap-2">
+                            <Button
+                              variant="secondary"
+                              size="icon"
+                              onClick={() => openEdit(f)}
+                              aria-label={`Editar ${f.nombre}`}
+                              disabled={deleting}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+
+                            <Button
+                              variant="secondary"
+                              size="icon"
+                              onClick={() => void handleDelete(f)}
+                              aria-label={`Eliminar ${f.nombre}`}
+                              disabled={deleting}
+                              title="Eliminar"
+                            >
+                              {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Paginación */}
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+            <div className="text-xs text-[var(--text-secondary)]">
+              Mostrando <b>{showingFrom}</b>–<b>{showingTo}</b> de <b>{totalItems}</b>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button variant="secondary" size="icon" onClick={goPrev} disabled={page <= 1}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+
+              <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-xs text-[var(--text-secondary)] shadow-sm">
+                Página <b>{page}</b> / <b>{totalPages}</b>
+              </div>
+
+              <Button variant="secondary" size="icon" onClick={goNext} disabled={page >= totalPages}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Dialog */}
       {dialogOpen ? (

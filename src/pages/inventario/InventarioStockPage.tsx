@@ -1,4 +1,8 @@
 // InventarioStockPage.tsx (ACTUALIZADO COMPLETO)
+// ✅ SKU y Código INV AUTOGENERADOS (autoincrement en backend)
+// ✅ ya NO se piden N° SKU / N° INV en el formulario
+// ✅ en CREATE: backend asigna sku/codigo
+// ✅ en EDIT: no se modifica sku/codigo (solo nombre/precio/stock/minimo + fotos)
 // ✅ múltiples imágenes (upload field "fotos")
 // ✅ consumo producto.imagenes[] + fotoUrl legacy
 // ✅ tabla muestra miniatura + badge +N
@@ -51,7 +55,10 @@ type ApiProductoImagen = {
 
 type ApiProducto = {
   id: string;
+
+  // ✅ ahora viene autogenerado en backend (string tipo "SKU-000123")
   sku: string | null;
+
   nombre: string;
   unidadMedida: string;
 
@@ -71,7 +78,10 @@ type ApiProducto = {
 type ApiInventario = {
   id: string;
   productoId: string;
+
+  // ✅ ahora viene autogenerado en backend (string tipo "INV-000123")
   codigo: string | null;
+
   stock: number;
   minimo: number;
   ubicacion: string | null;
@@ -98,8 +108,6 @@ type StockRow = {
 };
 
 type StockRowDraft = {
-  skuNum: string;
-  invNum: string;
   producto: string;
   tipo: ProductoTipo;
   precio: string;
@@ -238,40 +246,11 @@ function errorMessage(e: unknown, fallback: string) {
 }
 
 /* =========================
-   SKU/INV helpers
-========================= */
-
-function onlyDigits(s: string) {
-  return s.replace(/\D+/g, "");
-}
-function pad3(n: string) {
-  const d = onlyDigits(n);
-  if (!d) return "";
-  return d.padStart(3, "0");
-}
-function makeSKU(num: string) {
-  const p = pad3(num);
-  return p ? `SKU-${p}` : "";
-}
-function makeINV(num: string) {
-  const p = pad3(num);
-  return p ? `INV-${p}` : "";
-}
-function extractNumFromPrefixed(value: string | null | undefined, prefix: "SKU-" | "INV-") {
-  const v = (value ?? "").toUpperCase().trim();
-  if (!v) return "";
-  if (v.startsWith(prefix)) return onlyDigits(v.slice(prefix.length));
-  return onlyDigits(v);
-}
-
-/* =========================
    UI helpers
 ========================= */
 
 function toDraft(row?: StockRow): StockRowDraft {
   return {
-    skuNum: extractNumFromPrefixed(row?.sku, "SKU-"),
-    invNum: extractNumFromPrefixed(row?.codigo, "INV-"),
     producto: row?.producto ?? "",
     tipo: row?.tipo ?? "Producto",
     precio: row ? String(row.precio) : "",
@@ -697,42 +676,19 @@ export default function InventarioStockPage() {
   }
 
   function validateDraft() {
-    const sku = makeSKU(draft.skuNum);
-    const codigo = makeINV(draft.invNum);
-
     const producto = draft.producto.trim();
     const precio = parseNonNegativeNumber(draft.precio);
     const stock = parseNonNegativeInteger(draft.stock);
     const minimo = parseNonNegativeInteger(draft.minimo);
 
-    if (!draft.skuNum.trim()) return { ok: false as const, message: "El N° SKU es obligatorio." };
-    if (!sku) return { ok: false as const, message: "SKU inválido." };
-
     if (!producto) return { ok: false as const, message: "El nombre del producto es obligatorio." };
     if (precio === null) return { ok: false as const, message: "El precio debe ser un número ≥ 0." };
-
-    const editingProductoId =
-      dialogMode === "edit"
-        ? rows.find((r) => r.inventarioId === editingInventarioId)?.productoId
-        : null;
-
-    const skuLower = sku.toLowerCase();
-    const skuInUse = rows.some((row) => {
-      if (dialogMode === "edit" && editingProductoId && row.productoId === editingProductoId) return false;
-      return (row.sku ?? "").toLowerCase() === skuLower;
-    });
-    if (skuInUse) return { ok: false as const, message: "Ya existe un producto con ese SKU." };
-
-    if (!draft.invNum.trim()) return { ok: false as const, message: "El N° INV es obligatorio." };
-    if (!codigo) return { ok: false as const, message: "INV inválido." };
     if (stock === null) return { ok: false as const, message: "El stock debe ser un entero ≥ 0." };
     if (minimo === null) return { ok: false as const, message: "El mínimo debe ser un entero ≥ 0." };
 
     return {
       ok: true as const,
       value: {
-        codigo,
-        sku,
         producto,
         tipo: "Producto" as const,
         precio: Math.trunc(precio),
@@ -770,8 +726,8 @@ export default function InventarioStockPage() {
 
     try {
       if (dialogMode === "create") {
+        // ✅ CREATE: NO enviamos sku/codigo (backend autogenera)
         const form = new FormData();
-        form.append("sku", v.value.sku);
         form.append("nombre", v.value.producto);
         form.append("unidadMedida", "unidad");
         form.append("tipo", v.value.tipo);
@@ -781,11 +737,11 @@ export default function InventarioStockPage() {
 
         const createdProducto = await apiUploadForm<ApiProducto>("/productos", form, "POST");
 
+        // ✅ CREATE inventario: NO enviamos codigo
         await apiFetch<ApiInventario>("/inventario", {
           method: "POST",
           body: JSON.stringify({
             productoId: createdProducto.id,
-            codigo: v.value.codigo,
             stock: v.value.stock,
             minimo: v.value.minimo,
           }),
@@ -804,15 +760,24 @@ export default function InventarioStockPage() {
           return;
         }
 
+        // ✅ EDIT producto: no tocamos sku (ni lo enviamos)
         const form = new FormData();
-        form.append("sku", v.value.sku);
         form.append("nombre", v.value.producto);
         form.append("tipo", v.value.tipo);
         form.append("precioGeneral", String(v.value.precio));
         form.append("precioConDescto", String(v.value.precio));
         fotoFiles.forEach((f) => form.append("fotos", f));
-
         await apiUploadForm<ApiProducto>(`/productos/${current.productoId}`, form, "PATCH");
+
+        // ✅ EDIT inventario: actualiza stock/minimo (codigo no se toca)
+        await apiFetch<ApiInventario>(`/inventario/${current.inventarioId}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            stock: v.value.stock,
+            minimo: v.value.minimo,
+          }),
+        });
+
         shouldClose = true;
       }
     } catch (e: unknown) {
@@ -897,9 +862,6 @@ export default function InventarioStockPage() {
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
-
-  const skuPreview = makeSKU(draft.skuNum) || "SKU-000";
-  const invPreview = makeINV(draft.invNum) || "INV-000";
 
   return (
     <>
@@ -1114,7 +1076,12 @@ export default function InventarioStockPage() {
         {/* Dialog Create/Edit */}
         {dialogOpen ? (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
-            <button type="button" className="absolute inset-0 bg-[var(--overlay)]" onClick={closeDialog} aria-label="Cerrar" />
+            <button
+              type="button"
+              className="absolute inset-0 bg-[var(--overlay)]"
+              onClick={closeDialog}
+              aria-label="Cerrar"
+            />
             <div className="relative w-full max-w-xl rounded-2xl bg-[var(--surface)] p-4 shadow-xl">
               <div className="flex items-center justify-between gap-3">
                 <div className="text-sm font-semibold">{dialogMode === "create" ? "Agregar" : "Modificar"}</div>
@@ -1124,24 +1091,17 @@ export default function InventarioStockPage() {
               </div>
 
               <form className="mt-4 space-y-4" onSubmit={handleSubmit}>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <label className="space-y-1">
-                    <div className="text-xs font-medium text-[var(--text-primary)]">N° SKU</div>
-                    <input
-                      value={draft.skuNum}
-                      onChange={(e) => setDraft((c) => ({ ...c, skuNum: onlyDigits(e.target.value) }))}
-                      className="h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm shadow-sm focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                      placeholder="Ej: 12"
-                      inputMode="numeric"
-                      autoComplete="off"
-                      required
-                      disabled={saving}
-                    />
-                    <div className="text-[11px] text-[var(--text-secondary)]">
-                      Se guardará como: <b>{skuPreview}</b>
-                    </div>
-                  </label>
+                {/* ✅ aviso autogenerado */}
+                <div className="rounded-xl border border-[var(--border)] bg-[var(--hover)] px-3 py-2 text-[12px] text-[var(--text-secondary)]">
+                  <div className="font-semibold text-[var(--text-primary)]">SKU / Código INV</div>
+                  <div className="mt-0.5">
+                    {dialogMode === "create"
+                      ? "Se asignan automáticamente al guardar."
+                      : "No se pueden editar aquí (se mantienen tal cual)."}
+                  </div>
+                </div>
 
+                <div className="grid gap-3 sm:grid-cols-2">
                   <label className="space-y-1">
                     <div className="text-xs font-medium text-[var(--text-primary)]">Precio (General)</div>
                     <input
@@ -1157,9 +1117,7 @@ export default function InventarioStockPage() {
                       disabled={saving}
                     />
                   </label>
-                </div>
 
-                <div className="grid gap-3 sm:grid-cols-2">
                   <label className="space-y-1">
                     <div className="text-xs font-medium text-[var(--text-primary)]">Tipo</div>
                     <select
@@ -1170,23 +1128,6 @@ export default function InventarioStockPage() {
                     >
                       <option value="Producto">Producto</option>
                     </select>
-                  </label>
-
-                  <label className="space-y-1">
-                    <div className="text-xs font-medium text-[var(--text-primary)]">N° INV</div>
-                    <input
-                      value={draft.invNum}
-                      onChange={(e) => setDraft((c) => ({ ...c, invNum: onlyDigits(e.target.value) }))}
-                      className="h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm shadow-sm focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                      placeholder="Ej: 12"
-                      inputMode="numeric"
-                      autoComplete="off"
-                      required
-                      disabled={saving}
-                    />
-                    <div className="text-[11px] text-[var(--text-secondary)]">
-                      Se guardará como: <b>{invPreview}</b>
-                    </div>
                   </label>
                 </div>
 

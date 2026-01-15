@@ -1,129 +1,154 @@
-import { useMemo, useState } from 'react'
-import { Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { useAuth } from '../auth/auth'
-import Button from '../components/ui/Button'
+import { useEffect, useMemo, useState } from "react";
+import { Navigate, useLocation } from "react-router-dom";
+import { useMsal } from "@azure/msal-react";
+import { loginRequest, ALLOWED_DOMAIN } from "../auth/msal";
+import Button from "../components/ui/Button";
 
 type LocationState = {
-  from?: { pathname?: string }
+  from?: { pathname?: string };
+};
+
+function emailAllowed(email: string) {
+  const e = (email || "").toLowerCase().trim();
+  return e.endsWith(`@${ALLOWED_DOMAIN}`);
 }
 
-function isValidEmail(value: string) {
-  return /^\S+@\S+\.\S+$/.test(value)
+function MicrosoftLogo({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 23 23" className={className} role="img" aria-hidden="true">
+      <path fill="#f25022" d="M1 1h10v10H1z" />
+      <path fill="#7fba00" d="M12 1h10v10H12z" />
+      <path fill="#00a4ef" d="M1 11h10v10H1z" />
+      <path fill="#ffb900" d="M12 12h10v10H12z" />
+    </svg>
+  );
 }
 
 export default function LoginPage() {
-  const { user, login } = useAuth()
-  const navigate = useNavigate()
-  const location = useLocation()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
+  const { instance, accounts, inProgress } = useMsal();
+  const location = useLocation();
+  const [error, setError] = useState<string | null>(null);
+
+  const isLoggingIn = inProgress !== "none";
 
   const redirectTo = useMemo(() => {
-    const state = location.state as LocationState | null
-    return state?.from?.pathname && state.from.pathname !== '/login'
+    const state = location.state as LocationState | null;
+    return state?.from?.pathname && state.from.pathname !== "/login"
       ? state.from.pathname
-      : '/dashboard'
-  }, [location.state])
+      : "/dashboard";
+  }, [location.state]);
 
-  if (user) return <Navigate to="/dashboard" replace />
+  const activeEmail = (accounts?.[0]?.username || "").toLowerCase();
+  const hasAccount = accounts.length > 0;
+  const hasValidAccount = hasAccount && emailAllowed(activeEmail);
+
+  const domainError = useMemo(() => {
+    if (!hasAccount) return null;
+    if (hasValidAccount) return null;
+    return `Acceso denegado. Usa tu cuenta @${ALLOWED_DOMAIN}`;
+  }, [hasAccount, hasValidAccount]);
+
+  useEffect(() => {
+    if (domainError) {
+      const timer = setTimeout(() => instance.logoutRedirect().catch(() => {}), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [domainError, instance]);
+
+  async function signIn() {
+    setError(null);
+    try {
+      await instance.loginRedirect({ ...loginRequest, prompt: "select_account" });
+    } catch (e: unknown) {
+      setError("Error de autenticación");
+    }
+  }
+
+  if (hasValidAccount) return <Navigate to={redirectTo} replace />;
 
   return (
-    <div className="relative min-h-screen bg-[var(--app-bg)]">
-      <div className="absolute inset-0">
+    <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-gray-100 font-sans antialiased">
+      
+      {/* FONDO CON IMAGEN */}
+      <div className="absolute inset-0 z-0">
         <img
           src="/img/fondo_login.png"
           alt=""
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover brightness-[0.9]"
         />
-        <div className="absolute inset-0 bg-[rgba(0,0,0,var(--login-overlay-alpha))] backdrop-blur-[var(--login-overlay-blur)]" />
+        <div className="absolute inset-0 bg-white/40 backdrop-blur-[4px]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-white/90 via-transparent to-white/40" />
       </div>
 
-      <div className="relative mx-auto flex min-h-screen max-w-[1200px] items-center justify-center p-4 lg:justify-end">
-        <div className="w-full max-w-md rounded-3xl border border-[color:rgba(0,0,0,var(--login-card-border-alpha))] bg-[rgba(255,255,255,var(--login-card-alpha))] p-8 text-[color:var(--login-text)] shadow-[var(--login-card-shadow)] backdrop-blur-[var(--login-card-blur)]">
-          <div className="flex flex-col items-center text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--app-bg)] shadow-md ring-1 ring-black/5">
+      <main className="relative z-10 w-full max-w-[440px] px-6">
+        <div className="relative overflow-hidden rounded-[3.5rem] border border-white bg-white/80 p-10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.2)] backdrop-blur-2xl">
+          
+          <header className="flex flex-col items-center">
+            {/* LOGO CIRCULAR */}
+            <div className="group relative mb-8 h-44 w-44 overflow-hidden rounded-full bg-white shadow-2xl border-4 border-white">
               <img
                 src="/img/logo.png"
                 alt="COVASA"
-                className="h-10 w-10 object-contain"
+                className="h-full w-full object-cover"
               />
             </div>
-            <div className="mt-4">
-              <div className="text-xl font-semibold leading-tight tracking-tight text-[color:var(--login-text)]">
-                COVASA
-              </div>
-              <div className="mt-1 text-sm text-[color:var(--login-label)]">
-                Iniciar sesión al sistema
-              </div>
+
+            <h1 className="text-4xl font-black tracking-tighter text-gray-900 uppercase">
+              COVASA
+            </h1>
+            <p className="mt-2 text-[10px] font-black uppercase tracking-[0.6em] text-gray-500">
+              Sistemas de Acceso
+            </p>
+          </header>
+
+          <div className="my-10 h-px w-full bg-gray-200" />
+
+          {/* MENSAJES DE ERROR */}
+          {(domainError || error) && (
+            <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-center text-xs font-bold text-red-700">
+              {domainError || error}
             </div>
-          </div>
+          )}
 
-          <form
-            className="mt-7 space-y-4"
-            onSubmit={(event) => {
-              event.preventDefault()
-              setError(null)
-
-              if (!isValidEmail(email)) {
-                setError('Ingresa un correo válido.')
-                return
-              }
-              if (!password.trim()) {
-                setError('Ingresa tu contraseña.')
-                return
-              }
-
-              login(email.trim())
-              navigate(redirectTo, { replace: true })
-            }}
-          >
-            <label className="grid gap-2 text-sm">
-              <span className="text-xs font-semibold text-[color:var(--login-label)]">
-                Correo
-              </span>
-              <input
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                className="h-11 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 text-sm text-[color:var(--login-text)] outline-none ring-primary placeholder:text-[color:var(--text-secondary)] placeholder:opacity-70 focus:ring-2"
-                placeholder="admin@covasachile.cl"
-                autoComplete="email"
-              />
-            </label>
-
-            <label className="grid gap-2 text-sm">
-              <span className="text-xs font-semibold text-[color:var(--login-label)]">
-                Contraseña
-              </span>
-              <input
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                className="h-11 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 text-sm text-[color:var(--login-text)] outline-none ring-primary placeholder:text-[color:var(--text-secondary)] placeholder:opacity-70 focus:ring-2"
-                placeholder="••••••••"
-                type="password"
-                autoComplete="current-password"
-              />
-            </label>
-
-            {error ? (
-              <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
-                {error}
+          {/* BOTÓN NEGRO PREMIUM */}
+          <div className="space-y-6">
+            <Button
+              onClick={signIn}
+              disabled={isLoggingIn}
+              className="group relative h-16 w-full overflow-hidden rounded-2xl bg-[#1a1a1a] text-white shadow-2xl transition-all hover:bg-black active:scale-[0.98] disabled:opacity-70"
+            >
+              <div className="relative z-10 flex items-center justify-center gap-4">
+                {isLoggingIn ? (
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+                ) : (
+                  <div className="rounded-lg bg-white/10 p-2">
+                    <MicrosoftLogo className="h-5 w-5" />
+                  </div>
+                )}
+                <span className="text-sm font-black uppercase tracking-widest">
+                  {isLoggingIn ? "Autenticando..." : "Entrar con Microsoft"}
+                </span>
               </div>
-            ) : null}
-
-            <Button type="submit" className="h-11 w-full rounded-2xl">
-              Entrar
             </Button>
-          </form>
 
-          <div className="mt-5 rounded-2xl bg-[var(--hover)] px-4 py-3 text-xs text-[var(--text-secondary)]">
-            Demo: por ahora acepta cualquier contraseña (no hay backend aún).
+            {/* DOMINIO: Texto más oscuro para legibilidad */}
+            <div className="flex flex-col items-center gap-1 rounded-2xl border border-gray-200 bg-white/50 py-4 shadow-sm">
+              <span className="text-[9px] font-black uppercase tracking-widest text-gray-500">Uso Institucional</span>
+              <span className="text-sm font-bold text-gray-900">@{ALLOWED_DOMAIN}</span>
+            </div>
           </div>
         </div>
-      </div>
+
+        {/* FOOTER: CORREGIDO (Color más oscuro y peso fuerte) */}
+        <footer className="mt-12 text-center drop-shadow-sm">
+          <p className="text-[11px] font-bold tracking-[0.3em] text-gray-700 uppercase">
+            &copy; {new Date().getFullYear()} COVASA &middot; <span className="text-gray-900">Departamento de TI</span>
+          </p>
+          <div className="mt-2 text-[9px] font-black tracking-[0.1em] text-gray-500 uppercase">
+            Acceso Protegido por Microsoft Azure
+          </div>
+        </footer>
+      </main>
     </div>
-  )
+  );
 }
-
-
-

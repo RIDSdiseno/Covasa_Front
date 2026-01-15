@@ -4,6 +4,7 @@ import AppShell from "./layout/AppShell";
 
 import DashboardPage from "./pages/DashboardPage";
 import LoginPage from "./pages/LoginPage";
+import AuthCallbackPage from "./pages/AuthCallbackPage";
 
 import CobranzaLayout from "./pages/cobranza/CobranzaLayout";
 import CarteraPage from "./pages/cobranza/CarteraPage";
@@ -19,6 +20,7 @@ import CotizacionesPage from "./pages/documentos/CotizacionesPage";
 import CotizacionesListPage from "./pages/documentos/CotizacionesListPage";
 import FacturasPage from "./pages/documentos/FacturasPage";
 import CotizacionWebPage from "./pages/CotizacionWebPage";
+
 import CrmCotizacionesPage from "./pages/crm/CrmCotizacionesPage";
 import CrmCotizacionDetailPage from "./pages/crm/CrmCotizacionDetailPage";
 
@@ -45,8 +47,11 @@ import FletesEstadoPage from "./pages/fletes/FletesEstadoPage";
 export default function App() {
   return (
     <Routes>
-      <Route path="login" element={<LoginPage />} />
+      {/* ✅ Public */}
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
+      {/* ✅ Protected */}
       <Route
         element={
           <RequireAuth>
@@ -55,9 +60,9 @@ export default function App() {
         }
       >
         <Route index element={<Navigate to="/dashboard" replace />} />
-        <Route path="dashboard" element={<DashboardPage />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
 
-        <Route path="ventas" element={<VentasLayout />}>
+        <Route path="/ventas" element={<VentasLayout />}>
           <Route index element={<Navigate to="diarias" replace />} />
           <Route path="diarias" element={<VentasDiariasPage />} />
           <Route path="por-vendedor" element={<VentasPorVendedorPage />} />
@@ -65,17 +70,17 @@ export default function App() {
           <Route path="crecimiento" element={<CrecimientoVentasPage />} />
         </Route>
 
-        <Route path="cobranza" element={<CobranzaLayout />}>
+        <Route path="/cobranza" element={<CobranzaLayout />}>
           <Route index element={<Navigate to="cartera" replace />} />
           <Route path="cartera" element={<CarteraPage />} />
           <Route path="pagos" element={<CobranzaPagosPage />} />
           <Route path="creditos" element={<CreditosPage />} />
         </Route>
 
-        <Route path="clientes" element={<ClientesPage />} />
-        <Route path="trabajadores" element={<TrabajadoresPage />} />
+        <Route path="/clientes" element={<ClientesPage />} />
+        <Route path="/trabajadores" element={<TrabajadoresPage />} />
 
-        <Route path="inventario" element={<InventarioLayout />}>
+        <Route path="/inventario" element={<InventarioLayout />}>
           <Route index element={<Navigate to="stock" replace />} />
           <Route path="stock" element={<InventarioStockPage />} />
           <Route path="movimientos" element={<InventarioMovimientosPage />} />
@@ -83,35 +88,35 @@ export default function App() {
         </Route>
 
         {/* ✅ DOCUMENTOS */}
-        <Route path="documentos" element={<DocumentosLayout />}>
+        <Route path="/documentos" element={<DocumentosLayout />}>
           <Route index element={<Navigate to="cotizaciones" replace />} />
-
-          {/* ✅ Principal: CotizacionesPage */}
           <Route path="cotizaciones" element={<CotizacionesPage />} />
-
-          {/* ✅ Reemplaza "nota de ventas": listado tabla */}
           <Route path="notas-venta" element={<CotizacionesListPage />} />
-
           <Route path="facturas" element={<FacturasPage />} />
         </Route>
 
-        <Route path="cotizaciones" element={<CrmCotizacionesPage />} />
-        <Route path="cotizaciones/:id" element={<CrmCotizacionDetailPage />} />
+        {/* ✅ CRM */}
+        <Route path="/cotizaciones" element={<CrmCotizacionesPage />} />
+        <Route path="/cotizaciones/:id" element={<CrmCotizacionDetailPage />} />
 
-        <Route path="cotizacion-web" element={<CotizacionWebPage />} />
+        {/* ✅ Público/Interno (lo dejaste protegido acá; si lo quieres público, muévelo arriba) */}
+        <Route path="/cotizacion-web" element={<CotizacionWebPage />} />
 
-        <Route path="conciliacion" element={<ConciliacionPage />} />
-        <Route path="pagos" element={<PagosPage />} />
-        <Route path="configuracion" element={<ConfiguracionPage />} />
+        <Route path="/conciliacion" element={<ConciliacionPage />} />
+        <Route path="/pagos" element={<PagosPage />} />
+        <Route path="/configuracion" element={<ConfiguracionPage />} />
 
-        {/* ✅ Fletes con pestañas */}
-        <Route path="fletes" element={<FletesLayout />}>
+        {/* ✅ Fletes */}
+        <Route path="/fletes" element={<FletesLayout />}>
           <Route index element={<FletesPage />} />
           <Route path="estado" element={<FletesEstadoPage />} />
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />
       </Route>
+
+      {/* ✅ fallback global */}
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }
